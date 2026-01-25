@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- 核心：iOS 视口配置，解决键盘弹起视口变化问题 -->
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>iOS 兼容版 H5 聊天室</title>
+    <style>
+        /* 全局重置：解决 iOS 布局基础问题 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            /* 禁用全局滚动，避免 iOS 弹性滚动干扰 */
+            -webkit-overflow-scrolling: touch;
+            /* 保留 iOS 顺滑滚动 */
+            position: relative;
+            /* 确保视口稳定 */
+        }
+        html {
+            /* height: 50% */
+        }
+        body {
+            padding: 50px 0;
+        }
+
+        /* 1. 顶部固定导航栏（50px） */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            line-height: 50px;
+            background: #f7f7f7;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            z-index: 999;
+            /* iOS 关键：硬件加速 + 强制渲染 */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: top;
+        }
+
+        /* 3. 中间滚动区域（核心：自适应高度 + 独立滚动） */
+        .content {
+            position: absolute;
+            top: 50px;
+            /* 顶部导航高度 */
+            left: 0;
+            right: 0;
+            bottom: 50px;
+            /* 底部输入框高度 */
+            overflow-y: auto;
+            /* 仅纵向滚动 */
+            -webkit-overflow-scrolling: touch;
+            /* iOS 顺滑滚动 */
+            padding: 10px;
+            background: #fff;
+        }
+
+        /* 聊天内容示例（可替换为业务数据） */
+        .chat-item {
+            margin: 10px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .chat-item.left {
+            background: #e5e5e5;
+            float: left;
+            clear: both;
+        }
+
+        .chat-item.right {
+            background: #07c160;
+            color: #fff;
+            float: right;
+            clear: both;
+        }
+
+        /* 2. 底部固定输入框（50px） */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #f7f7f7;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 999;
+            /* iOS 关键：硬件加速 + 强制渲染 */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: bottom;
+        }
+
+        /* 输入框样式 */
+        .input-box {
+            flex: 1;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #e5e5e5;
+            border-radius: 18px;
+            outline: none;
+            font-size: 14px;
+            /* iOS 移除默认样式 */
+            -webkit-appearance: none;
+        }
+
+        /* 发送按钮 */
+        .send-btn {
+            width: 60px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            background: #07c160;
+            color: #fff;
+            border-radius: 18px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 1. 顶部固定导航栏 -->
+    <div class="header">聊天室</div>
+
+    <!-- 3. 中间滚动区域 -->
+    <div class="content" id="chatContent">
+        <!-- 示例聊天内容 -->
+        <div class="chat-item left">你好呀！</div>
+        <div class="chat-item right">你好～</div>
+        <div class="chat-item left">这是 iOS 兼容的聊天室哦</div>
+        <div class="chat-item right">测试键盘弹起是否影响布局</div>
+        <div class="chat-item left">顶部导航应该固定</div>
+        <div class="chat-item right">底部输入框也不会被顶走</div>
+        <div class="chat-item left">中间内容可以滚动</div>
+        <div class="chat-item right">试试多输入几条消息</div>
+        <div class="chat-item left">1</div>
+        <div class="chat-item right">2</div>
+        <div class="chat-item left">3</div>
+        <div class="chat-item right">4</div>
+        <div class="chat-item left">5</div>
+        <div class="chat-item right">6</div>
+        <div class="chat-item left">7</div>
+        <div class="chat-item right">8</div>
+        <div class="chat-item left">9</div>
+        <div class="chat-item right">10</div>
+    </div>
+
+    <!-- 2. 底部固定输入框 -->
+    <div class="footer">
+        <input type="text" class="input-box" id="msgInput" placeholder="输入消息...">
+        <div class="send-btn" id="sendBtn">发送</div>
+    </div>
+
+    <script>
+        // iOS 核心兼容逻辑：解决键盘弹起布局偏移
+        const msgInput = document.getElementById('msgInput');
+        const chatContent = document.getElementById('chatContent');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // 保存原始窗口高度（用于判断键盘弹起/收起）
+        let originalWindowHeight = window.innerHeight;
+
+        // 监听窗口大小变化（iOS 键盘弹起/收起会触发）
+        window.addEventListener('resize', () => {
+            // alert('resize')
+            const currentHeight = window.innerHeight;
+            // 键盘弹起：窗口高度变小，强制修正定位
+            if (currentHeight < originalWindowHeight) {
+                // 强制顶部导航固定
+                // document.querySelector('.header').style.position = 'fixed';
+                // document.querySelector('.header').style.top = '0';
+                // 强制底部输入框固定
+                document.querySelector('.footer').style.position = 'fixed';
+                document.querySelector('.footer').style.bottom = '0';
+                // 重置中间区域高度（关键：适配新的可视区域）
+                chatContent.style.bottom = '50px';
+            } else {
+                // 键盘收起，恢复原始高度
+                originalWindowHeight = currentHeight;
+                chatContent.style.bottom = '50px';
+            }
+            // 滚动到最新消息（体验优化）
+            chatContent.scrollTop = chatContent.scrollHeight;
+        });
+        
+        // 输入框聚焦：阻止页面自动滚动，强制固定栏不偏移
+        msgInput.addEventListener('focus', () => {
+            console.log('focus')
+            // 禁用页面滚动（iOS 防偏移）
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+            // 强制中间区域保持滚动状态
+            chatContent.style.overflowY = 'auto';
+        });
+
+        // 输入框失焦：恢复原始窗口高度
+        msgInput.addEventListener('blur', () => {
+            originalWindowHeight = window.innerHeight;
+        });
+
+        // 发送消息功能（示例）
+        sendBtn.addEventListener('click', sendMsg);
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMsg();
+        });
+
+        // 发送消息逻辑
+        function sendMsg() {
+            const msg = msgInput.value.trim();
+            if (!msg) return;
+            // 创建新消息节点
+            const newMsg = document.createElement('div');
+            newMsg.className = 'chat-item right';
+            newMsg.innerText = msg;
+            chatContent.appendChild(newMsg);
+            // 清空输入框
+            msgInput.value = '';
+            // 滚动到底部
+            chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        // 初始化：滚动到最新消息
+        window.onload = () => {
+            originalWindowHeight = window.innerHeight;
+            chatContent.scrollTop = chatContent.scrollHeight;
+        };
+    </script>
+</body>
+
+</html>
