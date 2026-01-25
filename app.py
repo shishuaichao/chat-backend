@@ -1,6 +1,6 @@
 # 导入其他文件的函数（核心：引用跨文件功能）
 from db_operation import get_all_teachers, add_teacher
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS  # 核心：解决跨域
 from wechat.ws_handler import socketio  # 导入抽离的socketio实例
 from wechat.operate import get_all_chats
