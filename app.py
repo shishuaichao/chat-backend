@@ -1,7 +1,6 @@
 
 from flask import Flask
 from flask_cors import CORS  # 核心：解决跨域
-from wechat.operate import get_all_chats
 from flask_socketio import SocketIO
 from wechat.ws_handler import register_socket_events
 from routes import all_blueprints
