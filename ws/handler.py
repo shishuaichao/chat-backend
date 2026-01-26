@@ -1,59 +1,55 @@
 from flask_socketio import emit
 from flask import request
-from ws.utils import treat_socket_message, treat_socket_system_msg
+from .utils import treat_socket_message, treat_socket_system_msg
+from extensions import socketio
 
 # 核心存储：{sid: userInfo}，全局字典
 user_map = {}
 
-def register_socket_events(socketio): 
-    # 客户端连接
-    @socketio.on('connect')
-    def handle_connect(auth):
-        print(f"connect auth {auth}")
-        sid = request.sid  # 获取客户端唯一标识（flask-socketio 内置）
-        user_map[sid] = auth
-        # print(f"✅连接成功 {sid} ，当前在线人数：{user_map}")
-        # 给当前客户端发送连接成功提示
-        emit('connect_success', sid)
+# 客户端连接
+@socketio.on('connect')
+def handle_connect(auth):
+    print(f"connect auth {auth}")
+    sid = request.sid  # 获取客户端唯一标识（flask-socketio 内置）
+    user_map[sid] = auth
+    print(f"✅连接成功 {sid} ，当前在线人数：{user_map}")
+    # 给当前客户端发送连接成功提示
+    emit('connect_success', sid)
+    # 群发在线人数更新  
+    emit('online_count', getUsersList(user_map), broadcast=True)
+
+
+# Socket.IO 事件：客户端断开连接
+@socketio.on('disconnect')
+def handle_disconnect():
+    sid = request.sid
+    if sid in user_map and user_map[sid] != '':
+        print(f"❌断开连接（{user_map[sid]['userName']}）")
+        # 移除用户
+        del user_map[sid]
         # 群发在线人数更新  
         emit('online_count', getUsersList(user_map), broadcast=True)
-    _ = handle_connect
 
-    # Socket.IO 事件：客户端断开连接
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        sid = request.sid
-        if sid in user_map and user_map[sid] != '':
-            print(f"❌断开连接（{user_map[sid]['userName']}）")
-            # 移除用户
-            del user_map[sid]
-            # 群发在线人数更新  
-            emit('online_count', getUsersList(user_map), broadcast=True)
-    _ = handle_disconnect
+# 普通消息
+@socketio.on('message')
+def handle_socket_message(msgObj):
+    treat_socket_message(msgObj)
 
-    # 普通消息
-    @socketio.on('message')
-    def handle_socket_message(msgObj):
-        treat_socket_message(msgObj)
-    _ = handle_socket_message
+# 系统消息
+@socketio.on('system_msg')
+def handle_socket_system_msg(msgObj):
+    treat_socket_system_msg(msgObj)
 
-    # 系统消息
-    @socketio.on('system_msg')
-    def handle_socket_system_msg(msgObj):
-        treat_socket_system_msg(msgObj)
-    _ = handle_socket_system_msg
+# 查询在线人数
+@socketio.on('query_online_count')
+def handle_query_online(data):
+    print(f"查询在线人数 {data}")
+    emit('online_count', getUsersList(user_map), broadcast=True)
 
-    # 查询在线人数
-    @socketio.on('query_online_count')
-    def handle_query_online(data):
-        print(f"查询在线人数 {data}")
-        emit('online_count', getUsersList(user_map), broadcast=True)
-    _ = handle_query_online
+def getUsersList(obj):
 
-    def getUsersList(obj):
-
-        return list(filter(lambda x: x != '', obj.values()))
-    def getUsersList(data_dict):
+    return list(filter(lambda x: x != '', obj.values()))
+def getUsersList(data_dict):
         # 记录已出现的id，用于去重
         seen_ids = set()
         # 存储去重后的结果

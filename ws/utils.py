@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 # 普通消息处理函数
 def treat_socket_message(msgObj):
+    print(f'WS收到：{msgObj}')
     msg = msgObj['content']
     if msg.startswith("群公告~~"):
         msgData = { 
