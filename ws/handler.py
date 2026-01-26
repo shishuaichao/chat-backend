@@ -1,6 +1,6 @@
-from flask_socketio import SocketIO, emit
+from flask_socketio import emit
 from flask import request
-from wechat.ws_utils import treat_socket_message, treat_socket_system_msg
+from ws.utils import treat_socket_message, treat_socket_system_msg
 
 # 核心存储：{sid: userInfo}，全局字典
 user_map = {}
