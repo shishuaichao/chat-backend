@@ -3,3 +3,9 @@ flask_cors
 pymysql
 flask_socketio
 zoneinfo
+
+fastapi
+uvicorn
+python-engineio
+eventlet
+python-socketio 
