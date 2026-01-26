@@ -23,10 +23,10 @@ def handle_connect():
 
 # Socket.IO 事件：客户端断开连接
 @socketio.on('disconnect')
-def handle_disconnect(userInfo):
+def handle_disconnect():
     sid = request.sid
-    if sid in user_map:
-        print(f"❌断开连接（{user_map[sid]['nickname']}）{userInfo}")
+    if sid in user_map and user_map[sid] != '':
+        print(f"❌断开连接（{user_map[sid]['nickname']}）")
         # 移除用户
         del user_map[sid]
         # 群发在线人数更新  
@@ -53,7 +53,8 @@ def handle_socket_system_msg(msgObj):
 
 # 查询在线人数
 @socketio.on('query_online_count')
-def handle_query_online():
+def handle_query_online(data):
+    print(f"查询在线人数 {data}")
     emit('online_count', getUsersList(user_map), broadcast=True)
 
 def getUsersList(obj):
