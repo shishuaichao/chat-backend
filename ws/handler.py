@@ -24,7 +24,7 @@ def handle_connect(auth):
 def handle_disconnect():
     sid = request.sid
     if sid in user_map and user_map[sid] != '':
-        print(f"❌断开连接（{user_map[sid]['userName']}）")
+        print(f"❌断开连接（{user_map[sid]}）")
         # 移除用户
         del user_map[sid]
         # 群发在线人数更新  
@@ -46,22 +46,19 @@ def handle_query_online(data):
     print(f"查询在线人数 {data}")
     emit('online_count', getUsersList(user_map), broadcast=True)
 
-def getUsersList(obj):
-
-    return list(filter(lambda x: x != '', obj.values()))
 def getUsersList(data_dict):
-        # 记录已出现的id，用于去重
-        seen_ids = set()
-        # 存储去重后的结果
-        unique_values = []
-        # 遍历字典的所有值（按插入顺序遍历，Python 3.7+ 字典保留插入顺序）
-        for value in data_dict.values():
-            # 获取当前项的id（如果没有id字段，跳过该条数据）
-            item_id = value.get('userId')
-            if item_id is None:
-                continue
-            # 仅保留首次出现的id对应的项
-            if item_id not in seen_ids:
-                seen_ids.add(item_id)
-                unique_values.append(value)
-        return unique_values
+    # 记录已出现的id，用于去重
+    seen_ids = set()
+    # 存储去重后的结果
+    unique_values = []
+    # 遍历字典的所有值（按插入顺序遍历，Python 3.7+ 字典保留插入顺序）
+    for value in data_dict.values():
+        # 获取当前项的id（如果没有id字段，跳过该条数据）
+        item_id = value.get('id')
+        if item_id is None:
+            continue
+        # 仅保留首次出现的id对应的项
+        if item_id not in seen_ids:
+            seen_ids.add(item_id)
+            unique_values.append(value)
+    return unique_values
