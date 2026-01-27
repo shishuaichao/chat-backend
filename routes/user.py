@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request
 import hashlib
 from db_config import get_db
+from utils.sql.get_valid_data import get_valid_data
 
 
 # 1. 创建蓝图（参数：蓝图名、模块名、URL前缀）
@@ -33,12 +34,10 @@ def register():
         "data": {"username": username, "nickname": nickname}
     }) 
 
-# 1. 更新头像
-@user_bp.route('/update/avatar', methods=['POST'])
-def update_avatar():
+@user_bp.route('/update', methods=['POST'])
+def update_user():
     data = request.json
     username = data['username']
-    avatar = data['avatar']
     db = get_db()
     with db.cursor() as cur:
         # 查询用户ID
@@ -46,14 +45,17 @@ def update_avatar():
         user = cur.fetchone()
         if not user:
             return jsonify({"code": 400, "msg": "用户不存在"}), 400
-        user_id = user['id']
-        cur.execute("UPDATE users SET avatar=%s WHERE id=%s", (avatar, user_id))
+        id = user['id']
+        valid_fields = {"nickname", "type", "avatar", "password"}
+        valueData = get_valid_data(data, valid_fields)
+        cur.execute(f"UPDATE users SET {valueData['keys']} WHERE id=%s", (valueData['values'], id))
         db.commit()
+
     return jsonify({
         "code": 200, 
-        "msg": "头像更新成功", 
-        "data": {"username": username, "avatar": avatar}
-    }) 
+        "msg": "用户信息更新成功", 
+        "data": {"username": username}
+    })
 
 @user_bp.route('/login', methods=['POST'])  
 def login():
