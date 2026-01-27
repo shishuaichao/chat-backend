@@ -67,6 +67,7 @@ def update_user():
         # }
     })
 
+# 3. 获取用户信息
 @user_bp.route('/info', methods=['GET'])
 def get_user_info():
     id = request.args.get("id")
@@ -79,3 +80,21 @@ def get_user_info():
         "msg": "用户信息获取成功", 
         "data": user
     })
+
+# 4. 获取所有用户
+@user_bp.route('/all', methods=['GET'])
+def get_all_users():
+    db = get_db()
+    with db.cursor() as cur:
+        cur.execute('SELECT id, username, nickname, avatar FROM users')
+        users = cur.fetchall()
+    return jsonify({
+        "code": 200, 
+        "msg": "所有用户信息获取成功", 
+        "data": users
+    })
+
+
+
+
+
