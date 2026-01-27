@@ -28,10 +28,12 @@ def register():
             (username, nickname, password)
         )
         db.commit()
+        cur.execute("SELECT id FROM users WHERE username=%s", (username,))
+        userId = cur.fetchone()['id']
     return jsonify({
         "code": 200, 
         "msg": "注册成功", 
-        "data": {"username": username, "nickname": nickname}
+        "data": {"username": username, "nickname": nickname, "id": userId}
     }) 
 
 @user_bp.route('/update', methods=['POST'])
@@ -46,14 +48,23 @@ def update_user():
         if not user:
             return jsonify({"code": 400, "msg": "用户不存在"}), 400
         id = user['id']
-        valid_fields = {"nickname", "type", "avatar", "password"}
-        valueData = get_valid_data(data, valid_fields)
-        cur.execute(f"UPDATE users SET {valueData['keys']} WHERE id=%s", (valueData['values'], id))
+        # valid_fields = {"nickname", "type", "avatar", "password"}
+        # valueData = get_valid_data(data, valid_fields)
+        # cur.execute(f"UPDATE users SET {valueData['keys']} WHERE id=%s", (valueData['values'], id))
+        if 'nickname' in data:
+            cur.execute("UPDATE users SET nickname=%s WHERE id=%s", (data['nickname'], id))
+        if 'avatar' in data:
+            cur.execute("UPDATE users SET avatar=%s WHERE id=%s", (data['avatar'], id))
         db.commit()
     return jsonify({
         "code": 200, 
         "msg": "用户信息更新成功", 
-        "data": {"username": username}
+        # "data": {
+        #     "id": user['id'], 
+        #     "username": user['username'],
+        #     "nickname": data.get('nickname', user.get('nickname', '')), 
+        #     "avatar": data.get('avatar', user.get('avatar', ''))
+        # }
     })
 
 @user_bp.route('/info', methods=['GET'])
