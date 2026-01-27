@@ -39,7 +39,7 @@ def get_all_chats():
         # 2. 创建游标（返回字典格式）
         cursor = conn.cursor(pymysql.cursors.DictCursor)
         # 3. 执行查询
-        cursor.execute('SELECT * FROM wechat')
+        cursor.execute('SELECT * FROM users')
         # 4. 获取结果
         chats = cursor.fetchall()
         return chats  # 返回查询结果

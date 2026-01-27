@@ -50,13 +50,21 @@ def update_user():
         valueData = get_valid_data(data, valid_fields)
         cur.execute(f"UPDATE users SET {valueData['keys']} WHERE id=%s", (valueData['values'], id))
         db.commit()
-
     return jsonify({
         "code": 200, 
         "msg": "用户信息更新成功", 
         "data": {"username": username}
     })
 
-@user_bp.route('/login', methods=['POST'])  
-def login():
-    return jsonify({'message': 'Login success'}), 200 
+@user_bp.route('/info', methods=['GET'])
+def get_user_info():
+    id = request.args.get("id")
+    db = get_db()
+    with db.cursor() as cur:
+        cur.execute('SELECT id, username, nickname, avatar FROM users WHERE id=%s', (id,))
+        user = cur.fetchone()
+    return jsonify({
+        "code": 200, 
+        "msg": "用户信息获取成功", 
+        "data": user
+    })

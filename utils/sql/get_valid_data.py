@@ -1,6 +1,6 @@
 
 # eg:
-# data = {"a": "user1", "b": "avatar.jpg"}
+# data = {"a": "user1", "b": "avatar.jpg", "d": 'xxxx'}
 # valid_fields = {"a", "b", "c"}
 
 def get_valid_data(data, valid_fields):
