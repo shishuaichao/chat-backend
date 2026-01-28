@@ -15,25 +15,35 @@ chat_bp = Blueprint(
 def create_conv():
     data = request.json
     type_ = data['type']  # 1=私聊 2=群聊
-    name = data.get('name', '')
-    owner_id = data['owner_id']
-    member_ids = data['member_ids']  # 成员ID列表
+    user_id = data['userId']
+    friend_id = data['friendId']
+    member_ids = data['memberIds']  # 成员ID列表
     db = get_db()
     with db.cursor() as cur:
         # 插入会话
         cur.execute(
             "INSERT INTO conversations (type, name, owner_id) VALUES (%s, %s, %s)",
-            (type_, name, owner_id)
+            (type_, '', user_id)
         )
         conv_id = cur.lastrowid
         # 插入成员
-        for user_id in member_ids:
+        for item in member_ids:
             cur.execute(
                 "INSERT INTO conversation_members (conversation_id, user_id) VALUES (%s, %s)",
-                (conv_id, user_id)
+                (conv_id, item['id'])
+            )
+        if type_ == 1:
+            # 更新用户关系
+            cur.execute(
+                "UPDATE friendships SET conversation_id=%s WHERE user_id=%s AND friend_id=%s",
+                (conv_id, user_id, friend_id)
+            )
+            cur.execute(
+                "UPDATE friendships SET conversation_id=%s WHERE user_id=%s AND friend_id=%s",
+                (conv_id, friend_id, user_id)
             )
         db.commit()
-    return jsonify({"code": 200, "data": {"conv_id": conv_id}, "msg": "创建成功"})
+    return jsonify({"code": 200, "data": {"convId": conv_id}, "msg": "创建成功"})
 
 # 1. 加入会话
 @chat_bp.route('/conversation/join', methods=['POST'])
