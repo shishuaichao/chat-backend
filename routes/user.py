@@ -67,18 +67,31 @@ def update_user():
         # }
     })
 
-# 3. 获取用户信息
+# 3. 获取用户信息+好友关系
 @user_bp.route('/info', methods=['GET'])
 def get_user_info():
+    user_id = request.args.get("userId")
     id = request.args.get("id")
     db = get_db()
     with db.cursor() as cur:
+        # 查询用户信息
         cur.execute('SELECT id, username, nickname, avatar FROM users WHERE id=%s', (id,))
         user = cur.fetchone()
+        if not user:
+            return jsonify({"code": 400, "msg": "用户不存在"}), 400
+        # 查询好友关系
+        cur.execute('SELECT status FROM friendships WHERE user_id=%s AND friend_id=%s', (user_id, id))
+        friendships = cur.fetchone()
     return jsonify({
         "code": 200, 
         "msg": "用户信息获取成功", 
-        "data": user
+        "data": {
+            "id": user['id'], 
+            "username": user['username'],
+            "nickname": user['nickname'],
+            "avatar": user['avatar'],
+            "friendshipsStatus": friendships['status'] if friendships else None
+        }
     })
 
 # 4. 获取所有用户
@@ -93,6 +106,45 @@ def get_all_users():
         "msg": "所有用户信息获取成功", 
         "data": users
     })
+
+# 添加好友
+@user_bp.route('/friendship/add', methods=['POST'])
+def add_friendship():
+    data = request.json
+    user_id = data['userId']
+    friend_id = data['friendId']
+    db = get_db()
+    with db.cursor() as cur:
+        cur.execute("SELECT id FROM friendships WHERE user_id=%s AND friend_id=%s", (user_id, friend_id))
+        friendship = cur.fetchone()
+        if friendship:
+            return jsonify({"code": 200, "msg": "已申请，待确认"}), 200
+        cur.execute("select id from friendships where user_id=%s AND friend_id=%s", (friend_id, user_id))
+        friendship = cur.fetchone()
+        if friendship:
+            # 添加会话
+            cur.execute(
+                "INSERT INTO conversations (type, name, owner_id) VALUES (%s, %s, %s)",
+                (1, f"{user_id}_{friend_id}", user_id)
+            )
+            conv_id = cur.lastrowid
+            # 插入成员
+            for user_id in [user_id, friend_id]:
+                cur.execute(
+                    "INSERT INTO conversation_members (conversation_id, user_id) VALUES (%s, %s)",
+                    (conv_id, user_id)
+                )
+        cur.execute("INSERT INTO friendships (user_id, friend_id, status) VALUES (%s, %s, %s)", (user_id, friend_id, 3))
+        db.commit()
+    return jsonify({
+        "code": 200, 
+        "msg": "添加好友成功" if friendship else "好友申请成功，待确认", 
+        "data": {"friendshipsStatus": 1 if friendship else 3},
+        "conversationId": conv_id,
+    })
+
+
+
 
 
 
