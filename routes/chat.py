@@ -67,3 +67,39 @@ def join_conv():
 def get_chats():
     res = get_all_chats()
     return jsonify(res)
+
+# 获取会话列表
+@chat_bp.route('/conversation/list', methods=['GET'])
+def get_conv_list():
+    user_id = request.args.get('userId')
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询用户加入的会话
+        cur.execute(
+            "SELECT conversation_id FROM conversation_members WHERE user_id=%s",
+            (user_id,)
+        )
+        convList = cur.fetchall()
+        res_list = []
+        for convItem in convList:
+            convId = convItem['conversation_id']
+            cur.execute(
+                "SELECT name, type, avatar FROM conversations WHERE id=%s",
+                (convId,)
+            )
+            convDetail = cur.fetchone()
+            res_list.append({**convDetail, 'convId': convId})
+    return jsonify({
+        "code": 200, 
+        "msg": "会话列表获取成功", 
+        "data": res_list
+    })
+
+
+
+
+
+
+
+
+
