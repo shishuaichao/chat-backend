@@ -68,7 +68,7 @@ def update_user():
     })
 
 # 3. 获取用户信息+好友关系
-@user_bp.route('/info', methods=['GET'])
+@user_bp.route('/userInfo', methods=['GET'])
 def get_user_info():
     user_id = request.args.get("userId")
     id = request.args.get("id")
@@ -195,6 +195,64 @@ def remark_friendship():
         "msg": "好友备注成功", 
         "data": {"remark": remark}
     })
+
+# 获取好友列表
+@user_bp.route('/friends', methods=['GET'])
+def get_friendship_list():
+    user_id = request.args.get('userId')
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询好友关系
+        cur.execute("SELECT * FROM friendships WHERE user_id=%s AND status=1", (user_id,))
+        friendships = cur.fetchall()
+        user_list = []
+        for item in friendships:
+            cur.execute("SELECT id, username, nickname, avatar FROM users WHERE id=%s", (item['friend_id'],))
+            friend_info = cur.fetchone()
+            if friend_info:
+                user_info = {
+                    "id": item['friend_id'],
+                    "remark": item['remark'],
+                    "conversationId": item['conversation_id'],
+                    "username": friend_info['username'],
+                    "nickname": friend_info['nickname'],
+                    "avatar": [friend_info['avatar']],
+                }
+                user_list.append(user_info)
+    return jsonify({
+        "code": 200, 
+        "msg": "好友列表获取成功", 
+        "data": user_list
+    })
+
+# 获取群列表
+@user_bp.route('/groups', methods=['GET'])
+def get_group_list():
+    user_id = request.args.get('userId')
+    print('user_id', user_id)
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询群关系
+        cur.execute("SELECT conversation_id FROM conversation_members WHERE user_id=%s", (user_id,))
+        convList = cur.fetchall()
+        print('convList', convList)
+        group_list = []
+        for item in convList:
+            convId = item['conversation_id']
+            cur.execute("SELECT id, name, avatar FROM conversations WHERE id=%s", (convId,))
+            group_info = cur.fetchone()
+            if group_info:
+                group_list.append(group_info)
+        
+    return jsonify({
+        "code": 200, 
+        "msg": "群列表获取成功", 
+        "data": group_list
+    })
+
+
+
+
 
 
 
