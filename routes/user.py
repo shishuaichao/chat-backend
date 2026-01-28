@@ -80,7 +80,7 @@ def get_user_info():
         if not user:
             return jsonify({"code": 400, "msg": "用户不存在"}), 400
         # 查询好友关系
-        cur.execute('SELECT status FROM friendships WHERE user_id=%s AND friend_id=%s', (user_id, id))
+        cur.execute('SELECT status, remark FROM friendships WHERE user_id=%s AND friend_id=%s', (user_id, id))
         friendships = cur.fetchone()
     return jsonify({
         "code": 200, 
@@ -90,7 +90,8 @@ def get_user_info():
             "username": user['username'],
             "nickname": user['nickname'],
             "avatar": user['avatar'],
-            "friendshipsStatus": friendships['status'] if friendships else None
+            "friendshipsStatus": friendships['status'] if friendships else None,
+            "remark": friendships['remark'] if friendships else None
         }
     })
 
@@ -177,6 +178,23 @@ def confirm_friendship():
         "data": {"friendshipsStatus": 1}
     })
 
+# 好友备注
+@user_bp.route('/friendship/remark', methods=['POST'])
+def remark_friendship():
+    data = request.json
+    user_id = data['userId']
+    friend_id = data['friendId']
+    remark = data['remark']
+    db = get_db()
+    with db.cursor() as cur:
+        # 更新好友备注
+        cur.execute("UPDATE friendships SET remark=%s WHERE user_id=%s AND friend_id=%s", (remark, user_id, friend_id))
+        db.commit()
+    return jsonify({
+        "code": 200, 
+        "msg": "好友备注成功", 
+        "data": {"remark": remark}
+    })
 
 
 
