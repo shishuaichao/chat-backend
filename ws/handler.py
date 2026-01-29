@@ -1,4 +1,4 @@
-from flask_socketio import emit
+from flask_socketio import emit, join_room, leave_room
 from flask import request
 from .utils import treat_socket_message, treat_socket_system_msg
 from extensions import socketio
@@ -18,6 +18,13 @@ def handle_connect(auth):
     # 群发在线人数更新  
     emit('online_count', getUsersList(user_map), broadcast=True)
 
+# 加入会话
+@socketio.on('room:join')
+def handle_room_join(roomId):
+    sid = request.sid
+    join_room(roomId)
+    emit('join_room', f"用户 {user_map[sid]['nickname']} 加入会话 {roomId}", room=roomId)
+    print(f"✅用户 {user_map[sid]} 加入会话 {roomId}")
 
 # Socket.IO 事件：客户端断开连接
 @socketio.on('disconnect')

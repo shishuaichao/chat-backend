@@ -1,7 +1,7 @@
 
 from flask import Blueprint, jsonify, request
-from wechat.operate import get_all_chats
 from db_config import get_db
+from ws.utils import convert_user_id_field
 
 # 1. 创建蓝图（参数：蓝图名、模块名、URL前缀）
 chat_bp = Blueprint(
@@ -72,11 +72,25 @@ def join_conv():
         db.commit()
     return jsonify({"code": 200, "msg": "用户加入会话成功"})
 
-# 2. 用蓝图装饰器定义路由（替代原有的@app.route）
+# 获取对应会话中的所有聊天记录
 @chat_bp.route('/records', methods=['GET'])
-def get_chats():
-    res = get_all_chats()
-    return jsonify(res)
+def get_messages_records():
+    conv_id = request.args.get('convId')
+    print('conv_id', conv_id)
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询会话中的聊天记录
+        cur.execute(
+            "SELECT * FROM messages WHERE conversation_id=%s",
+            (conv_id,)
+        )
+        records = cur.fetchall()
+    return jsonify({
+        "code": 200, 
+        "msg": "聊天记录获取成功", 
+        "data": records
+    })
+
 
 # 获取会话列表
 @chat_bp.route('/conversation/list', methods=['GET'])
