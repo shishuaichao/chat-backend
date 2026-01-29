@@ -79,9 +79,25 @@ def get_user_info():
         user = cur.fetchone()
         if not user:
             return jsonify({"code": 400, "msg": "用户不存在"}), 400
-        # 查询好友关系
-        cur.execute('SELECT status, remark, conversation_id FROM friendships WHERE user_id=%s AND friend_id=%s', (user_id, id))
-        friendships = cur.fetchone()
+        try:
+            # 查询好友关系
+            cur.execute(
+                'SELECT status, remark, conversation_id FROM friendships WHERE user_id=%s AND friend_id=%s', 
+                (user_id, id)
+            )
+            friendships = cur.fetchone()
+        except Exception as e:
+            print(f"查询失败：{e}")
+            return jsonify({
+                "code": 200,
+                "msg": "用户",
+                "data": {
+                    "id": user['id'], 
+                    "username": user['username'],
+                    "nickname": user['nickname'],
+                    "avatar": user['avatar'],
+                }
+            })
     return jsonify({
         "code": 200, 
         "msg": "用户信息获取成功", 
@@ -90,7 +106,7 @@ def get_user_info():
             "username": user['username'],
             "nickname": user['nickname'],
             "avatar": user['avatar'],
-            "friendshipsStatus": friendships['status'] if friendships else None,
+            "friendshipsStatus":  friendships['status'] if friendships else None,
             "remark": friendships['remark'] if friendships else None,
             "convId": friendships['conversation_id'] if friendships else None
         }
