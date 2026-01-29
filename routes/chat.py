@@ -108,11 +108,27 @@ def get_conv_list():
         for convItem in convList:
             convId = convItem['conversation_id']
             cur.execute(
-                "SELECT name, type, avatar FROM conversations WHERE id=%s",
+                "SELECT type, name, avatar FROM conversations WHERE id=%s",
                 (convId,)
             )
             convDetail = cur.fetchone()
-            res_list.append({**convDetail, 'convId': convId})
+            print('convDetail', convDetail)
+            if convDetail['type'] == 1:
+                cur.execute(
+                    "SELECT friend_id, remark FROM friendships WHERE conversation_id=%s AND user_id=%s",
+                    (convId, user_id)
+                )
+                friendshipInfo = cur.fetchone()
+                friend_id = friendshipInfo['friend_id']
+                cur.execute(
+                    "SELECT nickname, avatar FROM users WHERE id=%s",
+                    (friend_id,)
+                )
+                friendInfo = cur.fetchone()
+                convDetail.update(friendshipInfo)
+                convDetail.update(friendInfo)
+            res_list.append({
+                **convDetail, 'convId': convId})
     return jsonify({
         "code": 200, 
         "msg": "会话列表获取成功", 
