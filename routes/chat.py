@@ -113,7 +113,7 @@ def get_conv_list():
             )
             convDetail = cur.fetchone()
             print('convDetail', convDetail)
-            if convDetail['type'] == '1':
+            if convDetail['type'] == 1:
                 cur.execute(
                     "SELECT friend_id, remark FROM friendships WHERE conversation_id=%s AND user_id=%s",
                     (convId, user_id)
@@ -138,9 +138,9 @@ def get_conv_list():
 # 获取会话详情
 @chat_bp.route('/conversation/info', methods=['GET'])
 def get_conv_info():
-    conv_id = request.args.get('convId')   # 9
-    user_id = request.args.get('userId')  #  19
-    conv_type = request.args.get('type')  # 1
+    conv_id = request.args.get('convId')   
+    user_id = request.args.get('userId') 
+    conv_type = request.args.get('type')
     db = get_db()
     with db.cursor() as cur:
         # 查询会话详情
