@@ -32,7 +32,7 @@ def create_conv():
                 "INSERT INTO conversation_members (conversation_id, user_id) VALUES (%s, %s)",
                 (conv_id, item['id'])
             )
-        if type_ == 1:
+        if type_ == '1':
             # 更新用户关系
             cur.execute(
                 "UPDATE friendships SET conversation_id=%s WHERE user_id=%s AND friend_id=%s",
@@ -113,7 +113,7 @@ def get_conv_list():
             )
             convDetail = cur.fetchone()
             print('convDetail', convDetail)
-            if convDetail['type'] == 1:
+            if convDetail['type'] == '1':
                 cur.execute(
                     "SELECT friend_id, remark FROM friendships WHERE conversation_id=%s AND user_id=%s",
                     (convId, user_id)
@@ -135,7 +135,41 @@ def get_conv_list():
         "data": res_list
     })
 
-
+# 获取会话详情
+@chat_bp.route('/conversation/info', methods=['GET'])
+def get_conv_info():
+    conv_id = request.args.get('convId')   # 9
+    user_id = request.args.get('userId')  #  19
+    conv_type = request.args.get('type')  # 1
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询会话详情
+        info = {}
+        if conv_type == '1':
+            cur.execute(
+                "SELECT user_id FROM conversation_members WHERE conversation_id=%s",
+                (conv_id,)
+            )
+            userIdList = cur.fetchall()
+            for item in userIdList:
+                if item['user_id'] != int(user_id):
+                    friendId = item['user_id']
+                    break
+        else:
+            cur.execute(
+                "SELECT name, avatar FROM conversations WHERE id=%s",
+                (conv_id,)
+            )
+            info = cur.fetchone()
+    return jsonify({
+        "code": 200, 
+        "msg": "会话详情获取成功", 
+        "data": {
+            **info,
+            'friendId': friendId,
+            
+        }
+    })
 
 
 
