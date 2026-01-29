@@ -25,5 +25,6 @@ def get_index():
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='172.20.10.2', port=5000, debug=True)
+    socketio.run(app, host='192.168.1.5', port=5000, debug=True)
+    # socketio.run(app, host='172.20.10.2', port=5000, debug=True)
 
