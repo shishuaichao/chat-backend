@@ -4,7 +4,13 @@ import hashlib
 from db_config import get_db
 from utils.response import resJson
 from sql.sql_users import insertUserInfo, updateUserInfoById, getUserInfoById
-from sql.sql_friendships import getFriendshipsByFriendId, insertFriendship, updateFriendshipsById, updateFriendshipsByFriendId
+from sql.sql_friendships import (
+  getFriendshipsInfoByFriendId, 
+  insertFriendship, 
+  updateFriendshipsById, 
+  updateFriendshipsByFriendId, 
+  getFriendListByUserId,
+)
 
 
 # 创建蓝图（参数：蓝图名、模块名、URL前缀）
@@ -42,7 +48,7 @@ def get_user_info111():
             return resJson(400, '用户不存在')
         else:
             if user_id != id:
-                friendship = getFriendshipsByFriendId(cur, user_id, id)
+                friendship = getFriendshipsInfoByFriendId(cur, user_id, id)
                 if friendship:
                     user['friendshipsStatus'] = friendship['status']
                     user['remark'] = friendship['remark']
@@ -69,7 +75,7 @@ def add_friendship():
 	db = get_db()
 	with db.cursor() as cur:
 		# 检查对方是否已申请好友
-		friendship = getFriendshipsByFriendId(cur, user_id, friend_id)
+		friendship = getFriendshipsInfoByFriendId(cur, user_id, friend_id)
 		if friendship:
 			# 对方已申请好友
 			insertFriendship(cur, user_id, friend_id, 1)
@@ -99,6 +105,24 @@ def remark_friendship():
         "msg": "好友备注成功", 
         "data": {"remark": remark}
     })
+
+# 获取好友列表
+@user_bp.route('/friends', methods=['GET'])
+def get_friendship_list():
+    user_id = request.args.get('userId')
+    db = get_db()
+    with db.cursor() as cur:
+        # 查询好友关系
+        user_list = getFriendListByUserId(cur, user_id)
+    return jsonify({
+        "code": 200, 
+        "msg": "好友列表获取成功", 
+        "data": user_list
+    })
+
+
+
+
 
 
 # 3. 获取用户信息+好友关系
@@ -146,56 +170,8 @@ def get_user_info():
         }
     })
 
-# 确认好友
-@user_bp.route('/friendship/confirm', methods=['POST'])
-def confirm_friendship():
-    data = request.json
-    user_id = data['userId']
-    friend_id = data['friendId']
-    db = get_db()
-    with db.cursor() as cur:
-        cur.execute("SELECT id FROM friendships WHERE user_id=%s AND friend_id=%s AND status=3", (user_id, friend_id))
-        friendship = cur.fetchone()
-        if not friendship:
-            return jsonify({"code": 400, "msg": "好友申请不存在"}), 400
-        # 更新好友关系为已确认
-        cur.execute("UPDATE friendships SET status=1 WHERE id=%s", (friendship['id'],))
-        db.commit()
-    return jsonify({
-        "code": 200, 
-        "msg": "好友确认成功", 
-        "data": {"friendshipsStatus": 1}
-    })
 
 
-# 获取好友列表
-@user_bp.route('/friends', methods=['GET'])
-def get_friendship_list():
-    user_id = request.args.get('userId')
-    db = get_db()
-    with db.cursor() as cur:
-        # 查询好友关系
-        cur.execute("SELECT * FROM friendships WHERE user_id=%s AND status=1", (user_id,))
-        friendships = cur.fetchall()
-        user_list = []
-        for item in friendships:
-            cur.execute("SELECT id, username, nickname, avatar FROM users WHERE id=%s", (item['friend_id'],))
-            friend_info = cur.fetchone()
-            if friend_info:
-                user_info = {
-                    "id": item['friend_id'],
-                    "remark": item['remark'],
-                    "conversationId": item['conversation_id'],
-                    "username": friend_info['username'],
-                    "nickname": friend_info['nickname'],
-                    "avatar": friend_info['avatar'],
-                }
-                user_list.append(user_info)
-    return jsonify({
-        "code": 200, 
-        "msg": "好友列表获取成功", 
-        "data": user_list
-    })
 
 # 获取群列表
 @user_bp.route('/groups', methods=['GET'])
