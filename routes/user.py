@@ -68,20 +68,17 @@ def add_friendship():
         # 检查对方是否已申请好友
         friendship = getFriendshipsInfoByFriendId(cur, user_id, friend_id)
         if friendship:        
-        # 对方已申请好友
-          insertFriendship(cur, user_id, friend_id, 1)
-          conv_id = createConv(cur, '1', '', user_id, [{'id': friend_id}, {'id': user_id}])
-          # 更新好友的状态和会话ID
-          updateFriendshipsById(cur, friendship['id'], {'status': 1, 'conversation_id': conv_id})
-          # 更新自己的状态和会话ID
-          updateFriendshipsByFriendId(cur, user_id, friend_id, {'status': 1, 'conversation_id': conv_id})
-          db.commit()
-          return resJson(200, '添加成功', { 'status': 1 , 'convId': conv_id})
+            # 对方已申请好友
+            insertFriendship(cur, user_id, friend_id, 1)
+            updateFriendshipsById(cur, friendship['id'], {'status': 1 })
+            createConv(cur, 1, '', user_id, [{'id': friend_id}, {'id': user_id}])
+            db.commit()
+            return resJson(200, '添加成功', { 'friendshipsStatus': 1 })
         else:
-        # 对方未申请好友
-          insertFriendship(cur, user_id, friend_id, 3)
-          db.commit()
-          return resJson(200, '好友申请成功，待确认', { 'status': 3 })
+            # 对方未申请好友
+            insertFriendship(cur, user_id, friend_id, 3)
+            db.commit()
+            return resJson(200, '好友申请成功，待确认')
 
 # 5. 好友设置备注
 @user_bp.route(api_user.set_remark, methods=['POST'])
@@ -115,16 +112,12 @@ def get_friendship_info():
     db = get_db()
     with db.cursor() as cur:
         user = getUserInfoById(cur, friend_id)
-        if not user:
-            return resJson(400, '用户不存在')
-        else:
-            if user_id != friend_id:
-                friendship = getFriendshipsInfoByFriendId(cur, friend_id, user_id)
-                if friendship:
-                    user['friendshipsStatus'] = friendship['status']
-                    user['remark'] = friendship['remark']
-                    user['convId'] = friendship['conversation_id']
-    return resJson(200, '好友信息查询成功', user)
+        friend_friendship = getFriendshipsInfoByFriendId(cur, friend_id, user_id)
+    return resJson(200, '好友信息查询成功', {
+        **user,
+        'friendshipsStatus': friend_friendship['status'] if friend_friendship else None,
+        'remark': friend_friendship['remark'] if friend_friendship else ''
+    })
 
 # 8. 好友申请列表
 @user_bp.route(api_user.friend_apply_list, methods=['GET'])
