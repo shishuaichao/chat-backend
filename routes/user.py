@@ -2,17 +2,19 @@
 from flask import Blueprint, jsonify, request
 import hashlib
 from db_config import get_db
-from sql.sql_users import insertUserInfo, updateUserInfoById, getUserInfoById
 from utils.response import resJson
+from sql.sql_users import insertUserInfo, updateUserInfoById, getUserInfoById
+from sql.sql_friendships import getFriendshipsByFriendId, insertFriendship, updateFriendships
 
 
-# 1. 创建蓝图（参数：蓝图名、模块名、URL前缀）
+# 创建蓝图（参数：蓝图名、模块名、URL前缀）
 user_bp = Blueprint(
     "user",          # 蓝图唯一标识
     __name__,          # 当前模块名
     url_prefix="/user"  # 该蓝图下所有路由的统一前缀（可选，简化路由）
 )
 
+# 1. 注册用户
 @user_bp.route('/register', methods=['POST'])
 def register():
     data = request.json
@@ -28,6 +30,19 @@ def register():
     data = {"nickname": nickname, "id": id}
     return resJson(200, '注册成功', data)
 
+# 2. 查询用户信息
+@user_bp.route('/userInfo', methods=['GET'])
+def get_user_info111():
+	user_id = request.args.get("id")
+	db = get_db()
+	# return resJson(200, '用户信息查询成功', {})
+	with db.cursor() as cur:
+		user = getUserInfoById(cur, user_id)
+		if not user:
+			return resJson(400, '用户不存在')
+		return resJson(200, '用户信息查询成功', user)
+
+# 2. 更新用户信息
 @user_bp.route('/update', methods=['POST'])
 def update_user():
     data = request.json
@@ -35,13 +50,34 @@ def update_user():
     db = get_db()
     with db.cursor() as cur:
         updateUserInfoById(cur, user_id, data)
-        # db.commit()
+        db.commit()
         user = getUserInfoById(cur, user_id)
-        # cur.commit()
     return resJson(200, '用户信息更新成功', user)
 
+# 3. 添加好友
+@user_bp.route('/friendship/add', methods=['POST'])
+def add_friendship():
+	data = request.json
+	user_id = data['userId']
+	friend_id = data['friendId']
+	db = get_db()
+	with db.cursor() as cur:
+		# 检查对方是否已申请好友
+		friendship = getFriendshipsByFriendId(cur, user_id, friend_id)
+		if friendship:
+			# 对方已申请好友
+			insertFriendship(cur, user_id, friend_id, 1)
+			updateFriendships(cur, friendship['id'], {'status': 1})
+			db.commit()
+			return resJson(200, '添加成功', friendship)
+		else:
+			# 对方未申请好友
+			insertFriendship(cur, user_id, friend_id, 3)
+			db.commit()
+			return resJson(200, '好友申请成功，待确认', friendship)
+
 # 3. 获取用户信息+好友关系
-@user_bp.route('/userInfo', methods=['GET'])
+@user_bp.route('/11userInfo111', methods=['GET'])
 def get_user_info():
     user_id = request.args.get("userId")
     id = request.args.get("id")
@@ -83,50 +119,6 @@ def get_user_info():
             "remark": friendships['remark'] if friendships else None,
             "convId": friendships['conversation_id'] if friendships else None
         }
-    })
-
-# 4. 获取所有用户
-@user_bp.route('/all', methods=['GET'])
-def get_all_users():
-    db = get_db()
-    with db.cursor() as cur:
-        cur.execute('SELECT id, username, nickname, avatar FROM users')
-        users = cur.fetchall()
-    return jsonify({
-        "code": 200, 
-        "msg": "所有用户信息获取成功", 
-        "data": users
-    })
-
-# 添加好友
-@user_bp.route('/friendship/add', methods=['POST'])
-def add_friendship():
-    data = request.json
-    user_id = data['userId']
-    friend_id = data['friendId']
-    db = get_db()
-    with db.cursor() as cur:
-        cur.execute("SELECT id FROM friendships WHERE user_id=%s AND friend_id=%s", (user_id, friend_id))
-        friendship = cur.fetchone()
-        if friendship:
-            return jsonify({"code": 200, "msg": "已申请，待确认"}), 200
-        cur.execute("select id from friendships where user_id=%s AND friend_id=%s", (friend_id, user_id))
-        friendship = cur.fetchone()
-        if friendship:
-            cur.execute('update friendships set status=1 where user_id=%s AND friend_id=%s', (friend_id, user_id))
-            cur.execute("INSERT INTO friendships (user_id, friend_id, status) VALUES (%s, %s, %s)", (user_id, friend_id, 1))
-            db.commit()
-            return jsonify({
-                "code": 200, 
-                "msg": "添加好友成功", 
-                "data": {"friendshipsStatus": 1},
-            })    
-        cur.execute("INSERT INTO friendships (user_id, friend_id, status) VALUES (%s, %s, %s)", (user_id, friend_id, 3))
-        db.commit()
-    return jsonify({
-        "code": 200, 
-        "msg": "好友申请成功，待确认", 
-        "data": {"friendshipsStatus": 3},
     })
 
 # 确认好友

@@ -1,4 +1,3 @@
-from db_config import get_db
 
 user_can_update_fields = ['nickname', 'avatar', 'password']
 
@@ -9,13 +8,22 @@ def insertUserInfo(cur, username, nickname, password):
         (username, nickname, password)
     )
 
-def getUserInfoById(cur, id):
-    cur.execute("SELECT * FROM users WHERE id=%s", (id,))
-    return cur.fetchone()
+def getUserInfoById(cur, user_id):
+    if user_id is None:
+        return None
+    try:
+        cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+        return cur.fetchone()
+    except Exception:
+        return None
 
 def updateUserInfoById(cur, id, data={}):
-    for item in data.items():
-        if item[0] in user_can_update_fields:
-            print('updateUserInfoById', item[0], item[1])
-            sql = f"UPDATE users SET {item[0]}=%s WHERE id=%s"
-            cur.execute(sql, (item[1], id))
+    if id is None:
+        return None
+    try:
+        for item in data.items():
+            if item[0] in user_can_update_fields:
+                sql = f"UPDATE users SET {item[0]}=%s WHERE id=%s"
+                cur.execute(sql, (item[1], id))
+    except Exception:
+        return None
