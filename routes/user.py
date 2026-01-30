@@ -2,7 +2,8 @@
 from flask import Blueprint, jsonify, request
 import hashlib
 from db_config import get_db
-from utils.sql.get_valid_data import get_valid_data
+from sql.users import insertUserInfo
+from utils.response import resJson
 
 
 # 1. 创建蓝图（参数：蓝图名、模块名、URL前缀）
@@ -20,21 +21,17 @@ def register():
     nickname = data.get('nickname', username)
     db = get_db()
     with db.cursor() as cur:
-        cur.execute("SELECT id FROM users WHERE username=%s", (username,))
-        if cur.fetchone():
-            return jsonify({"code": 400, "msg": "用户名已存在"}), 400
-        cur.execute(
-            "INSERT INTO users (username, nickname, password) VALUES (%s, %s, %s)",
-            (username, nickname, password)
-        )
+        insertUserInfo(cur, username, nickname, password)
+        id = cur.lastrowid
+        print('id', id)
         db.commit()
-        cur.execute("SELECT id FROM users WHERE username=%s", (username,))
-        userId = cur.fetchone()['id']
-    return jsonify({
-        "code": 200, 
-        "msg": "注册成功", 
-        "data": {"username": username, "nickname": nickname, "id": userId}
-    }) 
+    data = {"username": username, "nickname": nickname, "id": id}
+    return resJson(200, '注册成功', data)
+    # return jsonify({
+    #     "code": 200, 
+    #     "msg": "注册成功", 
+    #     "data": {"username": username, "nickname": nickname, "id": id}
+    # }) 
 
 @user_bp.route('/update', methods=['POST'])
 def update_user():
@@ -48,9 +45,7 @@ def update_user():
         if not user:
             return jsonify({"code": 400, "msg": "用户不存在"}), 400
         id = user['id']
-        # valid_fields = {"nickname", "type", "avatar", "password"}
-        # valueData = get_valid_data(data, valid_fields)
-        # cur.execute(f"UPDATE users SET {valueData['keys']} WHERE id=%s", (valueData['values'], id))
+        
         if 'nickname' in data:
             cur.execute("UPDATE users SET nickname=%s WHERE id=%s", (data['nickname'], id))
         if 'avatar' in data:
@@ -148,24 +143,6 @@ def add_friendship():
                 "msg": "添加好友成功", 
                 "data": {"friendshipsStatus": 1},
             })    
-            # 添加会话
-            # cur.execute(
-            #     "INSERT INTO conversations (type, name, owner_id) VALUES (%s, %s, %s)",
-            #     (1, f"{user_id}_{friend_id}", user_id)
-            # )
-            # conv_id = cur.lastrowid
-            # # 会话插入成员
-            # for itemId in [user_id, friend_id]:
-            #     cur.execute(
-            #         "INSERT INTO conversation_members (conversation_id, user_id) VALUES (%s, %s)",
-            #         (conv_id, itemId)
-            #     )
-            # # 会话加到friendship中
-            # cur.execute(
-            #     "INSERT INTO friendships (user_id, friend_id, status, conversation_id) VALUES (%s, %s, %s, %s)",
-            #     (user_id, friend_id, 1, conv_id)
-            # )
-        
         cur.execute("INSERT INTO friendships (user_id, friend_id, status) VALUES (%s, %s, %s)", (user_id, friend_id, 3))
         db.commit()
     return jsonify({
@@ -233,7 +210,7 @@ def get_friendship_list():
                     "conversationId": item['conversation_id'],
                     "username": friend_info['username'],
                     "nickname": friend_info['nickname'],
-                    "avatar": [friend_info['avatar']],
+                    "avatar": friend_info['avatar'],
                 }
                 user_list.append(user_info)
     return jsonify({
@@ -267,11 +244,26 @@ def get_group_list():
         "data": group_list
     })
 
-
-
-
-
-
+# 好友申请列表
+@user_bp.route('/friends/apply', methods=['GET'])
+def get_friends_apply():
+    user_id = request.args.get('userId')
+    print(f"user_id{user_id}")
+    db = get_db()
+    with db.cursor() as cur:
+        cur.execute("SELECT * FROM friendships WHERE friend_id=%s", (user_id,))
+        itemList = cur.fetchall()
+        userList = []
+        for item in itemList:
+            cur.execute("SELECT * FROM users WHERE id=%s", (item["user_id"]))
+            userItem = cur.fetchone()
+            if item['status'] == 3 and userItem:
+                userList.append({**userItem, "status": 3})
+    return jsonify({
+        "code": 200, 
+        "msg": "列表获取成功", 
+        "data": userList
+    })
 
 
 
