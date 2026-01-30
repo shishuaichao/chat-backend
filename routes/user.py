@@ -2,7 +2,7 @@
 
 from flask import request
 import hashlib
-from .userApi import user_bp, api_user
+from .user_config import user_bp, api_user
 from db_config import get_db
 from utils.response import resJson
 from sql.sql_users import (

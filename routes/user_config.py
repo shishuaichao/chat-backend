@@ -8,7 +8,6 @@ user_bp = Blueprint(
 )
 
 # 定义常量api并导出
-
 class ApiUser:
     def __init__(self): 
         self.register = "/info/register"
@@ -22,6 +21,5 @@ class ApiUser:
         self.friend_apply_list = "/friend/applyList"
 
         self.group_list = "/group/groupList"
-        # self.group_info = "/group/groupInfo"
 
 api_user = ApiUser()
