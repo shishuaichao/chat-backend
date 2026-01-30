@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, request
 import hashlib
 from db_config import get_db
-from sql.users import insertUserInfo
+from sql.sql_users import insertUserInfo, updateUserInfoById, getUserInfoById
 from utils.response import resJson
 
 
@@ -25,42 +25,20 @@ def register():
         id = cur.lastrowid
         print('id', id)
         db.commit()
-    data = {"username": username, "nickname": nickname, "id": id}
+    data = {"nickname": nickname, "id": id}
     return resJson(200, '注册成功', data)
-    # return jsonify({
-    #     "code": 200, 
-    #     "msg": "注册成功", 
-    #     "data": {"username": username, "nickname": nickname, "id": id}
-    # }) 
 
 @user_bp.route('/update', methods=['POST'])
 def update_user():
     data = request.json
-    username = data['username']
+    user_id = data['userId']
     db = get_db()
     with db.cursor() as cur:
-        # 查询用户ID
-        cur.execute("SELECT id FROM users WHERE username=%s", (username,))
-        user = cur.fetchone()
-        if not user:
-            return jsonify({"code": 400, "msg": "用户不存在"}), 400
-        id = user['id']
-        
-        if 'nickname' in data:
-            cur.execute("UPDATE users SET nickname=%s WHERE id=%s", (data['nickname'], id))
-        if 'avatar' in data:
-            cur.execute("UPDATE users SET avatar=%s WHERE id=%s", (data['avatar'], id))
-        db.commit()
-    return jsonify({
-        "code": 200, 
-        "msg": "用户信息更新成功", 
-        # "data": {
-        #     "id": user['id'], 
-        #     "username": user['username'],
-        #     "nickname": data.get('nickname', user.get('nickname', '')), 
-        #     "avatar": data.get('avatar', user.get('avatar', ''))
-        # }
-    })
+        updateUserInfoById(cur, user_id, data)
+        # db.commit()
+        user = getUserInfoById(cur, user_id)
+        # cur.commit()
+    return resJson(200, '用户信息更新成功', user)
 
 # 3. 获取用户信息+好友关系
 @user_bp.route('/userInfo', methods=['GET'])
