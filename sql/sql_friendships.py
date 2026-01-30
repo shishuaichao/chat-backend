@@ -59,5 +59,14 @@ def getFriendListByUserId(cur, user_id):
       return friendlist
     except:
       return None
+# 查询好友申请列表（通过用户ID）
+def getFriendApplyListByUserId(cur, user_id):
+    try:
+      cur.execute("SELECT * FROM friendships WHERE friend_id=%s AND status=3", (user_id,))
+      friendlist = cur.fetchall()
+      return friendlist
+    except:
+      return None
+
 
 
