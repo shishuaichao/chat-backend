@@ -26,4 +26,21 @@ def createConv(cur, type_, name, owner_id, member_ids):
     return conv_id
 
 
+# get conversation by session key
+def getConvIdBySessionKey(cur, session_key):
+    cur.execute(
+        "SELECT id FROM conversations WHERE session_key = %s",
+        (session_key,)
+    )
+    conv_Info = cur.fetchone()
+    return conv_Info['id'] if conv_Info else None
+
+# 获取会话信息 必传 conv_id
+def getConvMembers(cur, conv_id):
+    cur.execute(
+        "SELECT * FROM conversation_members WHERE conversation_id = %s",
+        (conv_id,)
+    )
+    return cur.fetchall()
+
 # 

@@ -11,7 +11,7 @@ from sql.sql_users import (
   getUserInfoById,
 )
 from sql.sql_friendships import (
-  getFriendshipsInfoByFriendId, 
+  getFriendshipsInfo_friendInfo, 
   insertFriendship, 
   updateFriendshipsById, 
   updateFriendshipsByFriendId, 
@@ -66,7 +66,7 @@ def add_friendship():
     db = get_db()
     with db.cursor() as cur:
         # 检查对方是否已申请好友
-        friendship = getFriendshipsInfoByFriendId(cur, user_id, friend_id)
+        friendship = getFriendshipsInfo_friendInfo(cur, user_id, friend_id)
         if friendship:        
             # 对方已申请好友
             insertFriendship(cur, user_id, friend_id, 1)
@@ -112,7 +112,7 @@ def get_friendship_info():
     db = get_db()
     with db.cursor() as cur:
         user = getUserInfoById(cur, friend_id)
-        friend_friendship = getFriendshipsInfoByFriendId(cur, friend_id, user_id)
+        friend_friendship = getFriendshipsInfo_friendInfo(cur, friend_id, user_id)
     return resJson(200, '好友信息查询成功', {
         **user,
         'friendshipsStatus': friend_friendship['status'] if friend_friendship else None,

@@ -5,7 +5,10 @@ from utils.response import resJson
 
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
-from sql.sql_friendships import updateFriendshipsByFriendId
+from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
+from sql.sql_conv import getConvIdBySessionKey, getConvMembers
+from sql.sql_users import getUserInfoById
+
 
 # 1. 创建会话（私聊/群聊）
 @chat_bp.route(api_chat.create_conv, methods=['POST'])
@@ -115,6 +118,17 @@ def get_conv_list():
         "data": res_list
     })
 
+# 获取canvId 必传 session_key
+@chat_bp.route('/conversation/getIdBySessionKey', methods=['GET'])
+def get_conv_id_by_session_key():
+    session_key = request.args.get('sessionKey')
+    db = get_db()
+    with db.cursor() as cur:
+        conv_id = getConvIdBySessionKey(cur, session_key)
+    return resJson(200, "会话ID获取成功", {"convId": conv_id})
+
+
+
 # 获取会话详情
 @chat_bp.route('/conversation/info', methods=['GET'])
 def get_conv_info():
@@ -123,18 +137,19 @@ def get_conv_info():
     conv_type = request.args.get('type')
     db = get_db()
     with db.cursor() as cur:
-        # 查询会话详情
-        info = {}
         if conv_type == '1':
-            cur.execute(
-                "SELECT user_id FROM conversation_members WHERE conversation_id=%s",
-                (conv_id,)
-            )
-            userIdList = cur.fetchall()
-            for item in userIdList:
+            convMembers = getConvMembers(cur, conv_id)
+            for item in convMembers:
                 if item['user_id'] != int(user_id):
                     friendId = item['user_id']
                     break
+            froendships_info = getFriendshipsInfo_userInfo(cur, user_id, friendId)
+            print('froendships_info', froendships_info)
+            friend_info = getUserInfoById(cur, friendId)
+            return resJson(200, "会话详情获取成功", {
+                **friend_info, 
+                'remark': froendships_info['remark']
+            })
         else:
             cur.execute(
                 "SELECT name, avatar FROM conversations WHERE id=%s",

@@ -38,11 +38,19 @@ def updateFriendshipsByFriendId(cur, user_id, friend_id, data):
         return None
 
 # 查询好友关系信息（通过好友ID）
-def getFriendshipsInfoByFriendId(cur, user_id, friend_id):
+def getFriendshipsInfo_friendInfo(cur, user_id, friend_id):
     if user_id == friend_id:
       return None
     try:
       cur.execute("SELECT * FROM friendships WHERE user_id=%s OR friend_id=%s", (friend_id, user_id))
+      return cur.fetchone()
+    except:
+      return None
+def getFriendshipsInfo_userInfo(cur, user_id, friend_id):
+    if user_id == friend_id:
+      return None
+    try:
+      cur.execute("SELECT * FROM friendships WHERE user_id=%s OR friend_id=%s", (user_id, friend_id))
       return cur.fetchone()
     except:
       return None
