@@ -166,7 +166,18 @@ def get_conv_info():
         }
     })
 
-
+# 获取会话成员
+@chat_bp.route('/conversation/member', methods=['GET'])
+def get_conv_members():
+    conv_id = request.args.get('convId')
+    db = get_db()
+    member_list = []
+    with db.cursor() as cur:
+        convMemberIds = getConvMembers(cur, conv_id)
+        for item in convMemberIds:
+            userInfo = getUserInfoById(cur, item['user_id'])
+            member_list.append(userInfo)
+    return resJson(200, "会话成员获取成功", member_list)
 
 
 

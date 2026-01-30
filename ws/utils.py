@@ -11,8 +11,8 @@ def treat_socket_message(msgData):
     db = get_db()
     with db.cursor() as cur:
         cur.execute(
-            'INSERT INTO messages (sender_id, avatar, nickname, conversation_id, content, type, status) VALUES (%s, %s, %s, %s, %s, %s, %s)',
-            (msgData['senderId'], msgData['avatar'], msgData['nickname'], msgData['convId'], msgData['content'], msgData['type'], msgData['status'])
+            'INSERT INTO messages (sender_id, conversation_id, content, type, status) VALUES (%s, %s, %s, %s, %s)',
+            (msgData['sender_id'], msgData['convId'], msgData['content'], msgData['type'], msgData['status'])
         )
         db.commit()
     emit('message', msgData, room=msgData['convId'])

@@ -12,6 +12,7 @@ from sql.sql_users import (
 )
 from sql.sql_friendships import (
   getFriendshipsInfo_friendInfo, 
+  getFriendshipsInfo_userInfo,
   insertFriendship, 
   updateFriendshipsById, 
   updateFriendshipsByFriendId, 
@@ -111,12 +112,13 @@ def get_friendship_info():
     friend_id = request.args.get("id")
     db = get_db()
     with db.cursor() as cur:
-        user = getUserInfoById(cur, friend_id)
-        friend_friendship = getFriendshipsInfo_friendInfo(cur, friend_id, user_id)
+        friend_info = getUserInfoById(cur, friend_id)
+        friendship_friendInfo = getFriendshipsInfo_userInfo(cur, user_id, friend_id)
+        print('friendship_friendInfo', user_id, friend_id, friendship_friendInfo)
     return resJson(200, '好友信息查询成功', {
-        **user,
-        'friendshipsStatus': friend_friendship['status'] if friend_friendship else None,
-        'remark': friend_friendship['remark'] if friend_friendship else ''
+        **friend_info,
+        'friendshipsStatus': friendship_friendInfo['status'] if friendship_friendInfo else None,
+        'remark': friendship_friendInfo['remark'] if friendship_friendInfo else ''
     })
 
 # 8. 好友申请列表
@@ -146,7 +148,7 @@ def get_group_list():
         group_list = []
         for item in convList:
             convId = item['conversation_id']
-            cur.execute("SELECT id, name, avatar FROM conversations WHERE id=%s", (convId,))
+            cur.execute("SELECT id, name, avatar FROM conversations WHERE id=%s AND type=2", (convId,))
             group_info = cur.fetchone()
             if group_info:
                 group_list.append(group_info)
