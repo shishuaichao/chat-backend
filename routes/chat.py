@@ -78,6 +78,7 @@ def get_messages_records():
 # 获取会话列表
 @chat_bp.route('/conversation/list', methods=['GET'])
 def get_conv_list():
+    return []
     user_id = request.args.get('userId')
     db = get_db()
     with db.cursor() as cur:
@@ -98,8 +99,8 @@ def get_conv_list():
             print('convDetail', convDetail)
             if convDetail['type'] == 1:
                 cur.execute(
-                    "SELECT friend_id, remark FROM friendships WHERE conversation_id=%s AND user_id=%s",
-                    (convId, user_id)
+                    "SELECT friend_id, remark FROM friendships WHERE session_key=%s AND user_id=%s",
+                    (session_key, user_id)
                 )
                 friendshipInfo = cur.fetchone()
                 friend_id = friendshipInfo['friend_id']
