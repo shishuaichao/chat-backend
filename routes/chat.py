@@ -8,6 +8,7 @@ from sql.sql_conv import createConv
 from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
 from sql.sql_conv import getConvIdBySessionKey, getConvMembers
 from sql.sql_users import getUserInfoById
+from sql.sql_messages import get_messages_records
 
 
 # 1. 创建会话（私聊/群聊）
@@ -57,22 +58,15 @@ def join_conv():
 
 # 获取对应会话中的所有聊天记录
 @chat_bp.route('/records', methods=['GET'])
-def get_messages_records():
+def get_messages_xxxrecords():
     conv_id = request.args.get('convId')
     print('conv_id', conv_id)
     db = get_db()
     with db.cursor() as cur:
-        # 查询会话中的聊天记录
-        cur.execute(
-            "SELECT * FROM messages WHERE conversation_id=%s",
-            (conv_id,)
-        )
-        records = cur.fetchall()
-    return jsonify({
-        "code": 200, 
-        "msg": "聊天记录获取成功", 
-        "data": records
-    })
+        records = get_messages_records(cur, conv_id)
+        for record in records:
+            record['created_at'] = record['created_at'].strftime("%H:%M:%S")
+    return resJson(200, "聊天记录获取成功", records)
 
 
 # 获取会话列表

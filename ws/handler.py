@@ -1,7 +1,10 @@
 from flask_socketio import emit, join_room, leave_room
 from flask import request
-from .utils import treat_socket_message, treat_socket_system_msg
+from .utils import treat_socket_system_msg
 from extensions import socketio
+from sql.sql_messages import insert_message, get_message
+from db_config import get_db
+import datetime
 
 user_map = {}
 
@@ -33,7 +36,21 @@ def handle_disconnect():
 # 普通消息
 @socketio.on('message')
 def handle_socket_message(msgObj):
-    treat_socket_message(msgObj)
+    db = get_db()
+    with db.cursor() as cur:
+        msg_id = insert_message(cur, msgObj)
+        msg_info = get_message(cur, msg_id)
+        print('msg_info', msg_info)
+        db.commit()
+    emit('message', {
+        'msgId': msg_id,
+        'sender_id': msg_info['sender_id'],
+        'convId': msg_info['conversation_id'],
+        'type': msg_info['type'],
+        'content': msg_info['content'],
+        'avatar': msgObj['avatar'],
+        'created_at': msg_info['created_at'].strftime("%H:%M:%S"),
+    }, room=msgObj['convId'])
 
 # 系统消息
 @socketio.on('system_msg')

@@ -19,7 +19,7 @@ def treat_socket_message(msgData):
 
 # 系统消息处理函数
 def treat_socket_system_msg(msgObj, room=None, broadcast=True):
-    # print(f'WS收到：{msgObj}')
+    print(f'WS收到：{msgObj}')
     msgData = { 
         'id': msgObj['id'],
         'nickname': msgObj['nickname'],
