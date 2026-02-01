@@ -70,7 +70,7 @@ def get_messages_xxxrecords():
         for record in records:
             record['created_at'] = record['created_at'].strftime("%H:%M:%S")
     return resJson(200, "聊天记录获取成功", {
-        "records": records,
+        "records": records[len(records)-100:],
         "last_read_msg_id": unreadInfo['last_read_msg_id'],
         # "unread_count": 10,
     })
@@ -86,6 +86,8 @@ def get_conv_member_unread_list():
     db = get_db()
     with db.cursor() as cur:
         unreadInfoList = getConvMemberUnreadInfoList(cur, conv_id, last_read_msg_id)
+    for record in unreadInfoList:
+            record['created_at'] = record['created_at'].strftime("%H:%M:%S")
     return resJson(200, "未读信息列表获取成功", unreadInfoList)
 
 # 更新会话中成员的未读状态

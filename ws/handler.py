@@ -4,6 +4,7 @@ from .utils import treat_socket_system_msg
 from extensions import socketio
 from sql.sql_messages import insert_message, get_message
 from db_config import get_db
+from sql.sql_conv_member import updateConvMemberUnreadInfo
 import datetime
 
 user_map = {}
@@ -62,13 +63,15 @@ def handle_private_message(msgObj):
     with db.cursor() as cur:
         msg_id = insert_message(cur, msgObj)
         msg_info = get_message(cur, msg_id)
+        updateConvMemberUnreadInfo(cur, msgObj['convId'], msgObj['from'], msg_id)
         db.commit()
-
     for s_id in user_map.keys():
         if ( int(user_map[s_id]) == int(msgObj['to'])):
             emit('private_message', makeMessage(msg_id, msg_info, msgObj), to=s_id)
         elif (int(user_map[s_id]) == int(msgObj['from'])): 
+            # 更新发送者的未读状态
             emit('message', makeMessage(msg_id, msg_info, msgObj), to=s_id)
+            
     print(f"✅私聊: {msgObj['from']} 发送私聊消息给用户ID: {msgObj['to']}")
 
 

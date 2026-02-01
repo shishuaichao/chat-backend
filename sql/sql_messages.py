@@ -2,10 +2,11 @@
 
 def insert_message(cur, msgData):
     sql = """
-    INSERT INTO messages (sender_id, conversation_id, content, type, status)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO messages (avatar, sender_id, conversation_id, content, type, status)
+    VALUES (%s, %s, %s, %s, %s, %s)
     """
     values = (
+        msgData['avatar'],
         msgData['sender_id'],
         msgData['convId'],
         msgData['content'],
