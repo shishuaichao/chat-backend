@@ -67,6 +67,7 @@ def get_messages_xxxrecords():
     with db.cursor() as cur:
         records = get_messages_records(cur, conv_id)
         unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
+        print('unreadInfo', unreadInfo)
         for record in records:
             record['created_at'] = record['created_at'].strftime("%H:%M:%S")
     return resJson(200, "聊天记录获取成功", {
@@ -135,47 +136,15 @@ def update_conv_member_unread_info():
 # 获取会话列表
 @chat_bp.route('/conversation/list', methods=['GET'])
 def get_conv_list():
-    return []
     user_id = request.args.get('userId')
     db = get_db()
     with db.cursor() as cur:
         # 查询用户加入的会话
         cur.execute(
-            "SELECT conversation_id FROM conversation_members WHERE user_id=%s",
-            (user_id,)
+            "SELECT * FROM conversations"
         )
         convList = cur.fetchall()
-        res_list = []
-        for convItem in convList:
-            convId = convItem['conversation_id']
-            cur.execute(
-                "SELECT type, name, avatar FROM conversations WHERE id=%s",
-                (convId,)
-            )
-            convDetail = cur.fetchone()
-            print('convDetail', convDetail)
-            if convDetail['type'] == 1:
-                cur.execute(
-                    "SELECT friend_id, remark FROM friendships WHERE session_key=%s AND user_id=%s",
-                    (session_key, user_id)
-                )
-                friendshipInfo = cur.fetchone()
-                friend_id = friendshipInfo['friend_id']
-                cur.execute(
-                    "SELECT nickname, avatar FROM users WHERE id=%s",
-                    (friend_id,)
-                )
-                friendInfo = cur.fetchone()
-                convDetail.update(friendshipInfo)
-                convDetail.update(friendInfo)
-            res_list.append({
-                **convDetail, 'convId': convId})
-    return jsonify({
-        "code": 200, 
-        "msg": "会话列表获取成功", 
-        "data": res_list
-    })
-
+        return resJson(200, "会话列表获取成功", convList)
 # 获取canvId 必传 session_key
 @chat_bp.route('/conversation/getIdBySessionKey', methods=['GET'])
 def get_conv_id_by_session_key():
