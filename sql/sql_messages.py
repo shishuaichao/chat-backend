@@ -34,6 +34,7 @@ def get_messages_records(cur, conv_id):
 
 # 获取会话中所有成员的未读信息列表
 def getConvMemberUnreadInfoList(cur, conv_id, last_read_msg_id):
+    print('getConvMemberUnreadInfoList', conv_id, last_read_msg_id)
     sql = """
     SELECT * FROM messages WHERE conversation_id=%s AND id > %s
     """

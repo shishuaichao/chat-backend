@@ -9,7 +9,7 @@ from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_
 from sql.sql_conv import getConvIdBySessionKey, getConvMembers
 from sql.sql_users import getUserInfoById
 from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList
-from sql.sql_conv_member import updateConvMemberUnreadInfo
+from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMemberUnreadInfo
 
 
 # 1. 创建会话（私聊/群聊）
@@ -61,16 +61,18 @@ def join_conv():
 @chat_bp.route('/records', methods=['GET'])
 def get_messages_xxxrecords():
     conv_id = request.args.get('convId')
+    user_id = request.args.get('userId')
     print('conv_id', conv_id)
     db = get_db()
     with db.cursor() as cur:
         records = get_messages_records(cur, conv_id)
+        unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
         for record in records:
             record['created_at'] = record['created_at'].strftime("%H:%M:%S")
     return resJson(200, "聊天记录获取成功", {
         "records": records,
-        "last_read_msg_id": 1256,
-        "unread_count": 10,
+        "last_read_msg_id": unreadInfo['last_read_msg_id'],
+        # "unread_count": 10,
     })
 
 
