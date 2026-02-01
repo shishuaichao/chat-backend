@@ -79,7 +79,7 @@ def handle_socket_system_msg(msgObj):
 
 def makeMessage(msg_id, msg_info, msgObj):
     return {
-        'msgId': msg_id,
+        'id': msg_id,
         'sender_id': msg_info['sender_id'],
         'convId': msg_info['conversation_id'],
         'type': msg_info['type'],
