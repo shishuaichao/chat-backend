@@ -8,7 +8,8 @@ from sql.sql_conv import createConv
 from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
 from sql.sql_conv import getConvIdBySessionKey, getConvMembers
 from sql.sql_users import getUserInfoById
-from sql.sql_messages import get_messages_records
+from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList
+from sql.sql_conv_member import updateConvMemberUnreadInfo
 
 
 # 1. 创建会话（私聊/群聊）
@@ -66,7 +67,65 @@ def get_messages_xxxrecords():
         records = get_messages_records(cur, conv_id)
         for record in records:
             record['created_at'] = record['created_at'].strftime("%H:%M:%S")
-    return resJson(200, "聊天记录获取成功", records)
+    return resJson(200, "聊天记录获取成功", {
+        "records": records,
+        "last_read_msg_id": 1256,
+        "unread_count": 10,
+    })
+
+
+# 获取会话中所有成员的未读信息列表
+@chat_bp.route(api_chat.get_conv_member_unread_list, methods=['GET'])
+def get_conv_member_unread_list():
+    conv_id = request.args.get('convId')
+    last_read_msg_id = request.args.get('lastReadMsgId')
+    if not last_read_msg_id:
+        last_read_msg_id = 0
+    db = get_db()
+    with db.cursor() as cur:
+        unreadInfoList = getConvMemberUnreadInfoList(cur, conv_id, last_read_msg_id)
+    return resJson(200, "未读信息列表获取成功", unreadInfoList)
+
+# 更新会话中成员的未读状态
+@chat_bp.route(api_chat.update_conv_member_unread, methods=['POST'])
+def update_conv_member_unread_info():
+    data = request.json
+    user_id = data['userId']
+    conv_id = data['convId']
+    last_read_msg_id = data['lastReadMsgId']
+    db = get_db()
+    with db.cursor() as cur:
+        # 更新会话中成员的未读状态
+        updateConvMemberUnreadInfo(cur, conv_id, user_id, last_read_msg_id)
+        db.commit()
+    return resJson(200, "未读状态更新成功")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # 获取会话列表

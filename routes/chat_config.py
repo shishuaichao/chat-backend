@@ -11,5 +11,8 @@ chat_bp = Blueprint(
 class ApiChat:
     def __init__(self): 
         self.create_conv = "/conversation/createConversation"
+        self.get_conv_member_unread_info = "/conversation/member/unread"
+        self.get_conv_member_unread_list = "/conversation/member/unreadList"
+        self.update_conv_member_unread = '/conversation/updateUnread'
 
 api_chat = ApiChat()
