@@ -34,8 +34,9 @@ def create_conv():
 @chat_bp.route('/conversation/join', methods=['POST'])
 def join_conv():
     data = request.json
-    conv_id = data['conv_id']
-    user_id = data['user_id']
+    conv_id = data['convId']
+    user_id = data['userId']
+    print('conv_id', conv_id)
     db = get_db()
     with db.cursor() as cur:
         # 检查会话是否存在
@@ -48,14 +49,14 @@ def join_conv():
             (conv_id, user_id)
         )
         if cur.fetchone():
-            return jsonify({"code": 400, "msg": "用户已加入会话"}), 400
+            return resJson(200, "用户加入会话成功")
         # 加入会话
         cur.execute(
             "INSERT INTO conversation_members (conversation_id, user_id) VALUES (%s, %s)",
             (conv_id, user_id)
         )
         db.commit()
-    return jsonify({"code": 200, "msg": "用户加入会话成功"})
+        return resJson(200, "用户加入会话成功")
 
 # 获取对应会话中的所有聊天记录
 @chat_bp.route('/records', methods=['GET'])

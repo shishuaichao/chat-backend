@@ -22,8 +22,9 @@ def handle_connect(auth):
 @socketio.on('room:join')
 def handle_room_join(obj):
     join_room(obj['roomId'])
-    emit('join_room', f"用户ID: {obj['userId']} 加入会话", broadcast=True)
-    print(f"✅用户加入 {obj['userId']} 加入会话 {obj['roomId']}")
+    noticeMsg = f"用户加入 {obj['userId']} 加入会话 {obj['roomId']}"
+    emit('join_room', noticeMsg, broadcast=True)
+    print(noticeMsg)
 
 # 离开会话
 @socketio.on('room:leave')
