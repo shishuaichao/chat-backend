@@ -43,3 +43,11 @@ def updateConvMemberUnreadInfo(cur, conversation_id, user_id, last_read_msg_id):
         "UPDATE conversation_members SET last_read_msg_id=%s WHERE conversation_id=%s AND user_id=%s",
         (last_read_msg_id, conversation_id, user_id)
     )
+
+# 查询会话中所有成员的信息
+def getConvMembersInfo(cur, conversation_id):
+    cur.execute(
+        "SELECT user_id, unread_count, last_read_msg_id FROM conversation_members WHERE conversation_id=%s",
+        (conversation_id,)
+    )
+    return cur.fetchall()

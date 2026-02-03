@@ -2,8 +2,8 @@
 
 def insert_message(cur, msgData):
     sql = """
-    INSERT INTO messages (avatar, sender_id, conversation_id, content, type, status)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO messages (avatar, sender_id, conversation_id, content, type, status, sender_nickname)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     values = (
         msgData['avatar'],
@@ -11,7 +11,8 @@ def insert_message(cur, msgData):
         msgData['convId'],
         msgData['content'],
         msgData['type'],
-        msgData['status']
+        msgData['status'],
+        msgData['sender_nickname'],
     )
     cur.execute(sql, values)
     return cur.lastrowid

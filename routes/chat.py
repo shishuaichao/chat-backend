@@ -39,10 +39,6 @@ def join_conv():
     print('conv_id', conv_id)
     db = get_db()
     with db.cursor() as cur:
-        # 检查会话是否存在
-        cur.execute("SELECT id FROM conversations WHERE id=%s", (conv_id,))
-        if not cur.fetchone():
-            return jsonify({"code": 400, "msg": "会话不存在"}), 400
         # 检查用户是否已加入会话
         cur.execute(
             "SELECT id FROM conversation_members WHERE conversation_id=%s AND user_id=%s",
@@ -72,7 +68,7 @@ def get_messages_xxxrecords():
         for record in records:
             record['created_at'] = record['created_at'].strftime("%H:%M:%S")
     return resJson(200, "聊天记录获取成功", {
-        "records": records[len(records)-100:],
+        "records": records[-100:],
         "last_read_msg_id": unreadInfo['last_read_msg_id'],
         # "unread_count": 10,
     })
@@ -138,6 +134,7 @@ def update_conv_member_unread_info():
 @chat_bp.route('/conversation/list', methods=['GET'])
 def get_conv_list():
     user_id = request.args.get('userId')
+    conv_id = request.args.get('convId')
     db = get_db()
     with db.cursor() as cur:
         # 查询用户加入的会话
@@ -162,36 +159,17 @@ def get_conv_id_by_session_key():
 def get_conv_info():
     conv_id = request.args.get('convId')   
     user_id = request.args.get('userId') 
-    conv_type = request.args.get('type')
     db = get_db()
     with db.cursor() as cur:
-        if conv_type == '1':
-            convMembers = getConvMembers(cur, conv_id)
-            for item in convMembers:
-                if item['user_id'] != int(user_id):
-                    friendId = item['user_id']
-                    break
-            froendships_info = getFriendshipsInfo_userInfo(cur, user_id, friendId)
-            print('froendships_info', froendships_info)
-            friend_info = getUserInfoById(cur, friendId)
-            return resJson(200, "会话详情获取成功", {
-                **friend_info, 
-                'remark': froendships_info['remark']
-            })
-        else:
-            cur.execute(
-                "SELECT name, avatar FROM conversations WHERE id=%s",
-                (conv_id,)
-            )
-            info = cur.fetchone()
+        cur.execute(
+            "SELECT name FROM conversations WHERE id=%s",
+            (conv_id,)
+        )
+        info = cur.fetchone()
     return jsonify({
         "code": 200, 
         "msg": "会话详情获取成功", 
-        "data": {
-            **info,
-            'friendId': friendId,
-            
-        }
+        "data": info
     })
 
 # 获取会话成员

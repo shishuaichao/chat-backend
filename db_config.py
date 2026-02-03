@@ -6,7 +6,7 @@ MYSQL_CONFIG = {
     'port': 3306,             # 你的端口，固定3306
     'user': 'root',           # 你的MySQL用户名（比如root）
     'password': '',     # 你的MySQL密码（必填！）
-    'database': 'hhh',     # teacher表所在的数据库名（必填！）
+    'database': 'chat',     # teacher表所在的数据库名（必填！）
     'charset': 'utf8mb4'      # 避免中文乱码，固定
 }
 

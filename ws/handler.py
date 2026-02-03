@@ -4,7 +4,7 @@ from .utils import treat_socket_system_msg
 from extensions import socketio
 from sql.sql_messages import insert_message, get_message
 from db_config import get_db
-from sql.sql_conv_member import updateConvMemberUnreadInfo
+from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMembersInfo
 import datetime
 
 user_map = {}
@@ -14,9 +14,9 @@ user_map = {}
 def handle_connect(auth):
     sid = request.sid
     authtoken = auth['authToken']
-    user_map[sid] = authtoken
+    user_map[authtoken] = sid
     print(f"✅连接成功 ID: {authtoken} ，在线人数: {len(user_map)} 都有：{user_map}")
-    emit('connect_success')
+    emit('connect_success', {})
 
 # 加入会话
 @socketio.on('room:join')
@@ -37,9 +37,10 @@ def handle_room_leave(obj):
 @socketio.on('disconnect')
 def handle_disconnect():
     sid = request.sid
-    if sid in user_map:
-        print(f"❌断开连接 ID: {user_map[sid]}")
-        del user_map[sid]
+    if sid in user_map.values():
+        authtoken = next(key for key, value in user_map.items() if value == sid)
+        print(f"❌断开连接 ID: {authtoken}")
+        del user_map[authtoken]
         
 
 # 普通消息
@@ -49,9 +50,39 @@ def handle_socket_message(msgObj):
     with db.cursor() as cur:
         msg_id = insert_message(cur, msgObj)
         msg_info = get_message(cur, msg_id)
-        # print('msg_info', msg_info)
+        
+        if (int(msgObj['convType']) == 2):
+            updateConvMemberUnreadInfo(cur, msgObj['convId'], msgObj['sender_id'], msg_id)
+            convMembers = getConvMembersInfo(cur, msgObj['convId'])
+            
         db.commit()
     emit('message', makeMessage(msg_id, msg_info, msgObj), room=msgObj['convId'])
+    emit('group_message', makeMessage(msg_id, msg_info, msgObj), to=user_map['3'])
+    print(f"插入消息: {convMembers}")
+    if (int(msgObj['convType']) == 2):
+        for member in convMembers:
+            if int(member['user_id']) in user_map.keys():
+                print(f"推送群聊: {msg_id}")
+                emit('group_message', makeMessage(msg_id, msg_info, msgObj), to=user_map[member['user_id']])
+    
+
+# 群聊消息
+@socketio.on('group_message')
+def handle_group_message(msgObj):
+    print(f"收到群聊消息: {msgObj}")
+    db = get_db()
+    with db.cursor() as cur:
+        msg_id = insert_message(cur, msgObj)
+        msg_info = get_message(cur, msg_id)
+        updateConvMemberUnreadInfo(cur, msgObj['convId'], msgObj['from'], msg_id)
+        convMembers = getConvMembersInfo(cur, msgObj['convId'], msgObj['from'])
+        db.commit()
+    print(f"群聊成员: {convMembers}")
+    for member in convMembers:
+        if member['user_id'] in user_map.values():
+            emit('group_message', makeMessage(msg_id, msg_info, msgObj), to=member['user_id'])
+    
+
 
 # 私聊消息
 @socketio.on('private_message')
