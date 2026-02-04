@@ -76,5 +76,15 @@ def getFriendApplyListByUserId(cur, user_id):
     except:
       return None
 
-
+# 查询好友信息
+def getFriendInfo(cur, user_id, friend_id):
+    print('friendships', user_id, friend_id)
+    cur.execute("SELECT * FROM friendships WHERE user_id=%s AND friend_id=%s", (user_id, friend_id))
+    ship_info = cur.fetchone()
+    if ship_info:
+      friend_info = getUserInfoById(cur, friend_id)
+      friend_info['remark'] = ship_info['remark']
+      return friend_info
+    else:
+      return None
 

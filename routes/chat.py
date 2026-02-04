@@ -5,8 +5,8 @@ from utils.response import resJson
 
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
-from sql.sql_friendships import updateFriendshipsByFriendId
-from sql.sql_conv import getConvIdBySessionKey, getAllGroups
+from sql.sql_friendships import updateFriendshipsByFriendId, getFriendInfo
+from sql.sql_conv import getConvIdBySessionKey, getAllChats
 from sql.sql_users import getUserInfoById
 from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList, getLastMessage, getUnreadCount
 from sql.sql_conv_member import updateConvMemberLastReadMsgId, getConvMemberUnreadInfo, getConvMembersInfo
@@ -128,18 +128,25 @@ def get_conv_list():
     db = get_db()
     with db.cursor() as cur:
         user_info = getUserInfoById(cur, user_id)
-        groupList = getAllGroups(cur)
+        groupList = getAllChats(cur, user_id)
         arr = []
         obj = {}
         for item in groupList:
             msg_info = getLastMessage(cur, item['id'])
-            
             unread_count = getUnreadCount(cur, item['id'], user_id)
+            if item['type'] == 1:
+                friend_info = getFriendInfo(cur, user_id, item['friend1'] if item['friend1'] != int(user_id) else item['friend2'])
+                print('friend_info', friend_info)
+                name = friend_info.get('remark', '')
+                avatar = friend_info['avatar']
+            else:
+                name = item['name']
+                avatar = item['avatar']
             obj = {
                 'convId': item['id'],
                 'convType': item['type'],
-                'name': item['name'],
-                'avatar': item['avatar'],
+                'name': name,
+                'avatar': avatar,
                 'id': msg_info['id'],
                 'content': msg_info['content'],
                 'msgType': msg_info['type'],
