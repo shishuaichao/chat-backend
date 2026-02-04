@@ -37,21 +37,17 @@ def getConvMemberUnreadInfo(cur, conversation_id, user_id):
     )
     return cur.fetchone()
 
+
+
 # 更新会话中成员的未读id
-def updateConvMemberUnreadInfo(cur, conversation_id, user_id, last_read_msg_id):
+def updateConvMemberLastReadMsgId(cur, conversation_id, user_id, last_read_msg_id):
+    # 更新id
     cur.execute(
         "UPDATE conversation_members SET last_read_msg_id=%s WHERE conversation_id=%s AND user_id=%s   ",
         (last_read_msg_id, conversation_id, user_id)
     )
 
 
-# 获取未读数量
-def getUnreadCountBylastReadMsgId(cur, conversation_id, user_id, last_read_msg_id):
-    cur.execute(
-        "SELECT * FROM conversation_members  WHERE conversation_id=%s AND user_id=%s AND last_read_msg_id>%s",
-        (conversation_id, user_id, last_read_msg_id)
-    )
-    return len(cur.fetchall())
 
 
 
@@ -61,8 +57,6 @@ def updateConvMemberUnreadCount(cur, conversation_id, user_id, unread_count):
         "UPDATE conversation_members SET unread_count=%s WHERE conversation_id=%s AND user_id=%s",
         (unread_count, conversation_id, user_id)
     )
-    member_info = getConvMemberUnreadInfo(cur, conversation_id, user_id)
-    unread_count = member_info['unread_count'] + 1
 
 # 查询会话中所有成员的信息
 def getConvMembersInfo(cur, conversation_id):

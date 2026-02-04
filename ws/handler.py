@@ -4,7 +4,7 @@ from .utils import treat_socket_system_msg
 from extensions import socketio
 from sql.sql_messages import insert_message, get_message
 from db_config import get_db
-from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMembersInfo
+from sql.sql_conv_member import getConvMembersInfo
 import datetime
 from sql.sql_users import getUserInfoById
 from sql.sql_conv import getConvInfo
@@ -55,10 +55,10 @@ def handle_socket_message(msgObj):
     db = get_db()
     with db.cursor() as cur:
         msg_id = insert_message(cur, msgObj)  # 插入消息
+        db.commit()
         msg_info = get_message(cur, msg_id)  # 获取消息
         from_info = getUserInfoById(cur, msgObj['userId']) # 发送人信息
         conv_info = getConvInfo(cur, msgObj['convId'])  # 获取会话信息
-        
         
         # 再给房间外的人发消息
         if int(msgObj['convType']) == 1:
@@ -114,6 +114,7 @@ def makeMessage(from_info, to_info, msg_info, conv_info):
 
         'convId': conv_info['id'],
         'convType': conv_info['type'],
+        
 
     }
 

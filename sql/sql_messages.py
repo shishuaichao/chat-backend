@@ -1,5 +1,7 @@
 
 
+from sql.sql_conv_member import getConvMemberUnreadInfo 
+
 def insert_message(cur, msgData):
     # userId // 发送者id
     # content // 消息内容
@@ -55,3 +57,14 @@ def getLastMessage(cur, conv_id):
     values = (conv_id,)
     cur.execute(sql, values)
     return cur.fetchone()
+
+
+
+# 获取未读数量
+def getUnreadCount(cur, conversation_id, user_id):
+    last_read_msg_id = getConvMemberUnreadInfo(cur, conversation_id, user_id)['last_read_msg_id']
+    cur.execute(
+        "SELECT * FROM messages WHERE conversation_id=%s AND id>%s",
+        (conversation_id, last_read_msg_id)
+    )
+    return len(cur.fetchall())

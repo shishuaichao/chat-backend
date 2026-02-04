@@ -5,11 +5,11 @@ from utils.response import resJson
 
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
-from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
+from sql.sql_friendships import updateFriendshipsByFriendId
 from sql.sql_conv import getConvIdBySessionKey, getAllGroups
 from sql.sql_users import getUserInfoById
-from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList, getLastMessage
-from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMemberUnreadInfo, getConvMembersInfo
+from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList, getLastMessage, getUnreadCount
+from sql.sql_conv_member import updateConvMemberLastReadMsgId, getConvMemberUnreadInfo, getConvMembersInfo
 
 
 # 1. 创建会话（私聊/群聊）
@@ -117,7 +117,7 @@ def update_conv_member_unread_info():
     db = get_db()
     with db.cursor() as cur:
         # 更新会话中成员的未读状态
-        updateConvMemberUnreadInfo(cur, conv_id, user_id, last_read_msg_id)
+        updateConvMemberLastReadMsgId(cur, conv_id, user_id, last_read_msg_id)
         db.commit()
     return resJson(200, "未读状态更新成功")
 
@@ -133,7 +133,8 @@ def get_conv_list():
         obj = {}
         for item in groupList:
             msg_info = getLastMessage(cur, item['id'])
-            member_info = getConvMemberUnreadInfo(cur, item['id'], user_id)
+            
+            unread_count = getUnreadCount(cur, item['id'], user_id)
             obj = {
                 'convId': item['id'],
                 'convType': item['type'],
@@ -146,7 +147,7 @@ def get_conv_list():
                 'senderId': msg_info['sender_id'],
                 'senderNickname': user_info['nickname'],
 
-                'unreadCount': member_info['unread_count'],
+                'unreadCount': unread_count,
             }
             arr.append(obj)
     return resJson(200, "会话列表获取成功", arr)
