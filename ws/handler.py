@@ -61,34 +61,19 @@ def handle_socket_message(msgObj):
         conv_info = getConvInfo(cur, msgObj['convId'])  # 获取会话信息
         
         # 再给房间外的人发消息
-        if int(msgObj['convType']) == 1:
-            # 单聊
-            to_info = getUserInfoById(cur, msgObj['to']) # 接收人信息
-            print('to_info', to_info)
-            print('user_map', user_map)
-            print('to_info_id', to_info['id'])
-            # 先给房间里发消息
-            sendInfo = makeMessage(from_info, to_info, msg_info, conv_info) 
-            # 更新对方的未读消息信息 and 给对方额外发一条消息，如果他不在房间内也能收到
-            if to_info['id'] in user_map.keys():
-                sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[to_info['id']])
-        elif (int(msgObj['convType']) == 2):
-            # 群聊
-            sendInfo = makeMessage(from_info, {}, msg_info, conv_info) 
-            print('qun sendInfo', sendInfo)
-            # 获取会话成员信息 and 更新成员的未读信息 and 发送消息
-            convMembers = getConvMembersInfo(cur, msgObj['convId'])
-            print('qun convMembers', convMembers)
-            for member in convMembers:
-                print('qun member', member)
-                user_id = member['user_id']
-                if (str(user_id) in user_map.keys()): 
-                    sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[str(user_id)])
+        sendInfo = makeMessage(from_info, msg_info, conv_info) 
+        # 获取会话成员信息 and 更新成员的未读信息 and 发送消息
+        convMembers = getConvMembersInfo(cur, msgObj['convId'])
+        for member in convMembers:
+            user_id = member['user_id']
+            if (str(user_id) in user_map.keys()): 
+                sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[str(user_id)])
         db.commit()
         emit('message', sendInfo, room=msgObj['convId'])
     
 # 给不在房间的人发送消息
 def sendNoticeMsgToSomeoneForNotInRoom(msgInfo, sid):
+    print('sendNoticeMsgToSomeoneForNotInRoom', msgInfo, sid)
     emit('notice_message', msgInfo, to=sid)
 
 # 系统消息
@@ -97,11 +82,11 @@ def handle_socket_system_msg(msgObj):
     treat_socket_system_msg(msgObj)
 
 # 返回消息格式
-def makeMessage(from_info, to_info, msg_info, conv_info):
-    if (conv_info['type'] == 1):
-        name = to_info['nickname']
-    else:
-        name = conv_info['name']
+def makeMessage(from_info, msg_info, conv_info):
+    # if (conv_info['type'] == 1):
+    #     name = to_info['nickname']
+    # else:
+    #     name = conv_info['name']
     return {
         'id': msg_info['id'],
         'senderId': msg_info['sender_id'],
@@ -112,7 +97,7 @@ def makeMessage(from_info, to_info, msg_info, conv_info):
         'msgType': msg_info['type'],
         'createTime': msg_info['created_at'].strftime("%H:%M"),
         
-        'name': name,
+        # 'name': name,
 
         'convId': conv_info['id'],
         'convType': conv_info['type'],
