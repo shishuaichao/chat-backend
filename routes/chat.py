@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request
 from db_config import get_db
 from utils.response import resJson
+from datetime import datetime
 
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
@@ -142,6 +143,7 @@ def get_conv_list():
                 sender_info = getUserInfoById(cur, msg_info['sender_id'])
             else: 
                 sender_info = {}
+                msg_info = {'created_at': datetime.now(),}
             
             print('sender_info', sender_info)
             unread_count = getUnreadCount(cur, item['id'], user_id)
@@ -154,17 +156,17 @@ def get_conv_list():
             else:
                 name = item['name']
                 avatar = item['avatar']
-                senderNickname = sender_info['nickname'] if sender_info else ''
+                senderNickname = sender_info.get('nickname', '')
             obj = {
                 'convId': item['id'],
                 'convType': item['type'],
                 'name': name,
                 'avatar': avatar,
-                'id': msg_info['id'],
-                'content': msg_info['content'],
-                'msgType': msg_info['type'],
-                'createTime': msg_info['created_at'].strftime("%H:%M"),
-                'senderId': msg_info['sender_id'],
+                'id': msg_info.get('id', 0),
+                'content': msg_info.get('content', ''),
+                'msgType': msg_info.get('type', ''),
+                'createTime': msg_info.get('created_at', datetime.now()).strftime("%H:%M"),
+                'senderId': msg_info.get('sender_id', 0),
                 'senderNickname': senderNickname,
 
                 'unreadCount': unread_count,
