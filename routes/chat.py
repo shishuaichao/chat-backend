@@ -68,6 +68,8 @@ def get_messages_xxxrecords():
         for record in records:
             user_info = getUserInfoById(cur, record['sender_id'])
             unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
+            if not unreadInfo:
+                unreadInfo = {}
             # 设置未读数量
             obj = {
                 'id': record['id'],
@@ -133,6 +135,9 @@ def get_conv_list():
         obj = {}
         for item in groupList:
             msg_info = getLastMessage(cur, item['id'])
+            if not msg_info:
+                msg_info = {}
+                continue
             unread_count = getUnreadCount(cur, item['id'], user_id)
             if item['type'] == 1:
                 friend_info = getFriendInfo(cur, user_id, item['friend1'] if item['friend1'] != int(user_id) else item['friend2'])

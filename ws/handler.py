@@ -65,10 +65,13 @@ def handle_socket_message(msgObj):
             # 单聊
             to_info = getUserInfoById(cur, msgObj['to']) # 接收人信息
             print('to_info', to_info)
+            print('user_map', user_map)
+            print('to_info_id', to_info['id'])
             # 先给房间里发消息
             sendInfo = makeMessage(from_info, to_info, msg_info, conv_info) 
             # 更新对方的未读消息信息 and 给对方额外发一条消息，如果他不在房间内也能收到
-            sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[msgObj['to']])
+            if to_info['id'] in user_map.keys():
+                sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[to_info['id']])
         elif (int(msgObj['convType']) == 2):
             # 群聊
             sendInfo = makeMessage(from_info, {}, msg_info, conv_info) 
@@ -80,7 +83,6 @@ def handle_socket_message(msgObj):
                 print('qun member', member)
                 user_id = member['user_id']
                 if (str(user_id) in user_map.keys()): 
-                    print('qun user_map[user_id]', user_map[str(user_id)])
                     sendNoticeMsgToSomeoneForNotInRoom(sendInfo, user_map[str(user_id)])
         db.commit()
         emit('message', sendInfo, room=msgObj['convId'])

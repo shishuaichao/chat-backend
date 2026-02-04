@@ -11,8 +11,8 @@ def createConv(cur, type_, name, owner_id, member_ids):
     # 插入会话
     if int(type_) == 1:
         cur.execute(
-            "INSERT INTO conversations (type, name, owner_id, session_key) VALUES (%s, %s, %s, %s)",
-            (type_, name, owner_id, getSessionKey(member_ids))
+            "INSERT INTO conversations (type, name, owner_id, session_key, friend1, friend2) VALUES (%s, %s, %s, %s, %s, %s)",
+            (type_, name, owner_id, getSessionKey(member_ids), member_ids[0]['id'], member_ids[1]['id'])
         )
     else:
         cur.execute(
