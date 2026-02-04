@@ -35,12 +35,10 @@ def getConvIdBySessionKey(cur, session_key):
     conv_Info = cur.fetchone()
     return conv_Info['id'] if conv_Info else None
 
-# 获取会话信息 必传 conv_id
-def getConvMembers(cur, conv_id):
+def getConvInfo(cur, conv_id):
     cur.execute(
-        "SELECT * FROM conversation_members WHERE conversation_id = %s",
+        "SELECT * FROM conversations WHERE id = %s",
         (conv_id,)
     )
-    return cur.fetchall()
-
-# 
+    conv_Info = cur.fetchone()
+    return conv_Info if conv_Info else None

@@ -1,18 +1,21 @@
 
 
 def insert_message(cur, msgData):
+    # userId // 发送者id
+    # content // 消息内容
+    # msgType // 消息类型 1: 文本 2: 图片 3: 语音 4: 视频 5: 文件 6: 位置 7: 链接 8: 系统消息
+    # convId // 会话id
+    # convType  // 会话类型 1: 单聊 2: 群聊
+    # to  // 单聊接收者id
     sql = """
-    INSERT INTO messages (avatar, sender_id, conversation_id, content, type, status, sender_nickname)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO messages (sender_id, conversation_id, content, type)
+    VALUES (%s, %s, %s, %s)
     """
     values = (
-        msgData['avatar'],
-        msgData['sender_id'],
+        msgData['userId'],
         msgData['convId'],
         msgData['content'],
-        msgData['type'],
-        msgData['status'],
-        msgData['sender_nickname'],
+        msgData['msgType'],
     )
     cur.execute(sql, values)
     return cur.lastrowid

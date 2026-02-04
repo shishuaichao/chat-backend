@@ -6,10 +6,10 @@ from utils.response import resJson
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
 from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
-from sql.sql_conv import getConvIdBySessionKey, getConvMembers
+from sql.sql_conv import getConvIdBySessionKey
 from sql.sql_users import getUserInfoById
 from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList
-from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMemberUnreadInfo
+from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMemberUnreadInfo, getConvMembersInfo
 
 
 # 1. 创建会话（私聊/群聊）
@@ -59,19 +59,43 @@ def join_conv():
 def get_messages_xxxrecords():
     conv_id = request.args.get('convId')
     user_id = request.args.get('userId')
-    print('conv_id', conv_id)
+    # print('conv_id', conv_id)
     db = get_db()
     with db.cursor() as cur:
         records = get_messages_records(cur, conv_id)
+        # print('records', records)
         unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
-        print('unreadInfo', unreadInfo)
+        # print('unreadInfo', unreadInfo)
+        arr = []
         for record in records:
-            record['created_at'] = record['created_at'].strftime("%H:%M:%S")
+            user_info = getUserInfoById(cur, record['sender_id'])
+            obj = {
+                'id': record['id'],
+                'content': record['content'],
+                'senderId': user_info['id'],
+                'senderNickname': user_info['nickname'],
+                'name': user_info['nickname'],
+                'avatar': user_info['avatar'],
+                'msgType': record['type'],
+                'createTime': record['created_at'].strftime("%H:%M:%S"),
+            }
+            arr.append(obj)
     return resJson(200, "聊天记录获取成功", {
-        "records": records[-100:],
+        "records": arr,
         "last_read_msg_id": unreadInfo['last_read_msg_id'],
-        # "unread_count": 10,
+        "unread_count": unreadInfo['unread_count'],
     })
+# 'id': msg_info['id'],
+#         'senderId': msg_info['sender_id'],
+#         'content': msg_info['content'],
+#         'msgType': msg_info['type'],
+#         'createTime': msg_info['created_at'].strftime("%H:%M"),
+        
+#         'vatar': from_info['avatar'],
+#         'name': name,
+
+#         'convId': conv_info['id'],
+#         'convType': conv_info['type'],
 
 
 # 获取会话中所有成员的未读信息列表
@@ -102,34 +126,6 @@ def update_conv_member_unread_info():
         db.commit()
     return resJson(200, "未读状态更新成功")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # 获取会话列表
 @chat_bp.route('/conversation/list', methods=['GET'])
 def get_conv_list():
@@ -151,6 +147,35 @@ def get_conv_id_by_session_key():
     with db.cursor() as cur:
         conv_id = getConvIdBySessionKey(cur, session_key)
     return resJson(200, "会话ID获取成功", {"convId": conv_id})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -179,7 +204,7 @@ def get_conv_members():
     db = get_db()
     member_list = []
     with db.cursor() as cur:
-        convMemberIds = getConvMembers(cur, conv_id)
+        convMemberIds = getConvMembersInfo(cur, conv_id)
         for item in convMemberIds:
             userInfo = getUserInfoById(cur, item['user_id'])
             member_list.append(userInfo)
