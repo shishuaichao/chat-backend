@@ -53,7 +53,7 @@ def getAllChats(cur, user_id):
     return conv_Info if conv_Info else None
 
 # 获取群信息
-def getGroupInfo(cur, group_id):
+def getConvInfo(cur, group_id):
     cur.execute(
         "SELECT * FROM conversations WHERE id = %s",
         (group_id,)

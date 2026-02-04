@@ -6,7 +6,7 @@ from utils.response import resJson
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
 from sql.sql_friendships import updateFriendshipsByFriendId, getFriendInfo
-from sql.sql_conv import getConvIdBySessionKey, getAllChats
+from sql.sql_conv import getConvIdBySessionKey, getAllChats, getConvInfo
 from sql.sql_users import getUserInfoById
 from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList, getLastMessage, getUnreadCount
 from sql.sql_conv_member import updateConvMemberLastReadMsgId, getConvMemberUnreadInfo, getConvMembersInfo
@@ -69,7 +69,10 @@ def get_messages_xxxrecords():
             user_info = getUserInfoById(cur, record['sender_id'])
             unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
             if not unreadInfo:
-                unreadInfo = {}
+                unreadInfo = {
+                    'last_read_msg_id': 0,
+                    'unread_count': 0,
+                }
             # 设置未读数量
             obj = {
                 'id': record['id'],
@@ -214,17 +217,23 @@ def get_conv_id_by_session_key():
 def get_conv_info():
     conv_id = request.args.get('convId')   
     user_id = request.args.get('userId') 
+    conv_type = request.args.get('convType')
     db = get_db()
     with db.cursor() as cur:
-        cur.execute(
-            "SELECT name FROM conversations WHERE id=%s",
-            (conv_id,)
-        )
-        info = cur.fetchone()
+        item = getConvInfo(cur, conv_id)
+        if conv_type == '2':
+            return jsonify({
+            "code": 200, 
+            "msg": "会话详情获取成功222", 
+            "data": item
+        })
+        friend_info = getFriendInfo(cur, user_id, item['friend1'] if item['friend1'] != int(user_id) else item['friend2'])
+        # friend_info['name'] = item['name']
+
     return jsonify({
         "code": 200, 
         "msg": "会话详情获取成功", 
-        "data": info
+        "data": friend_info
     })
 
 # 获取会话成员

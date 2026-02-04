@@ -19,7 +19,8 @@ from sql.sql_friendships import (
   getFriendListByUserId,
   getFriendApplyListByUserId,
 )
-from sql.sql_conv import createConv
+from sql.sql_conv import createConv 
+from sql.sql_conv_member import insertConvMember
 
 # 1. 注册用户
 @user_bp.route(api_user.register, methods=['POST'])
@@ -32,7 +33,8 @@ def register():
     with db.cursor() as cur:
         insertUserInfo(cur, username, nickname, password)
         id = cur.lastrowid
-        print('id', id)
+        insertConvMember(cur, 1, id)
+        insertConvMember(cur, 2, id)
         db.commit()
     data = {"nickname": nickname, "id": id}
     return resJson(200, '注册成功', data)
