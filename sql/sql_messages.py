@@ -46,3 +46,12 @@ def getConvMemberUnreadInfoList(cur, conv_id, last_read_msg_id):
     values = (conv_id, last_read_msg_id)
     cur.execute(sql, values)
     return cur.fetchall()
+
+# 获取会话中最后一条信息
+def getLastMessage(cur, conv_id):
+    sql = """
+    SELECT * FROM messages WHERE conversation_id=%s ORDER BY id DESC LIMIT 1
+    """
+    values = (conv_id,)
+    cur.execute(sql, values)
+    return cur.fetchone()

@@ -42,3 +42,20 @@ def getConvInfo(cur, conv_id):
     )
     conv_Info = cur.fetchone()
     return conv_Info if conv_Info else None
+
+# 获取所有群
+def getAllGroups(cur):
+    cur.execute(
+        "SELECT * FROM conversations WHERE type = 2"
+    )
+    conv_Info = cur.fetchall()
+    return conv_Info if conv_Info else None
+
+# 获取群信息
+def getGroupInfo(cur, group_id):
+    cur.execute(
+        "SELECT * FROM conversations WHERE id = %s",
+        (group_id,)
+    )
+    conv_Info = cur.fetchone()
+    return conv_Info if conv_Info else None

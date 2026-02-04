@@ -6,9 +6,9 @@ from utils.response import resJson
 from .chat_config import api_chat, chat_bp
 from sql.sql_conv import createConv
 from sql.sql_friendships import updateFriendshipsByFriendId, getFriendshipsInfo_userInfo
-from sql.sql_conv import getConvIdBySessionKey
+from sql.sql_conv import getConvIdBySessionKey, getAllGroups
 from sql.sql_users import getUserInfoById
-from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList
+from sql.sql_messages import get_messages_records, getConvMemberUnreadInfoList, getLastMessage
 from sql.sql_conv_member import updateConvMemberUnreadInfo, getConvMemberUnreadInfo, getConvMembersInfo
 
 
@@ -63,12 +63,12 @@ def get_messages_xxxrecords():
     db = get_db()
     with db.cursor() as cur:
         records = get_messages_records(cur, conv_id)
-        # print('records', records)
-        unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
-        # print('unreadInfo', unreadInfo)
+        
         arr = []
         for record in records:
             user_info = getUserInfoById(cur, record['sender_id'])
+            unreadInfo = getConvMemberUnreadInfo(cur, conv_id, user_id)
+            # 设置未读数量
             obj = {
                 'id': record['id'],
                 'content': record['content'],
@@ -85,17 +85,7 @@ def get_messages_xxxrecords():
         "last_read_msg_id": unreadInfo['last_read_msg_id'],
         "unread_count": unreadInfo['unread_count'],
     })
-# 'id': msg_info['id'],
-#         'senderId': msg_info['sender_id'],
-#         'content': msg_info['content'],
-#         'msgType': msg_info['type'],
-#         'createTime': msg_info['created_at'].strftime("%H:%M"),
-        
-#         'vatar': from_info['avatar'],
-#         'name': name,
 
-#         'convId': conv_info['id'],
-#         'convType': conv_info['type'],
 
 
 # 获取会话中所有成员的未读信息列表
@@ -108,9 +98,14 @@ def get_conv_member_unread_list():
     db = get_db()
     with db.cursor() as cur:
         unreadInfoList = getConvMemberUnreadInfoList(cur, conv_id, last_read_msg_id)
-    for record in unreadInfoList:
-            record['created_at'] = record['created_at'].strftime("%H:%M:%S")
-    return resJson(200, "未读信息列表获取成功", unreadInfoList)
+        for record in unreadInfoList:
+            print('record', record)
+            sender_info = getUserInfoById(cur, record['sender_id'])
+            print('sender_info', sender_info)
+            record['senderNickname'] = sender_info['nickname']
+            record['avatar'] = sender_info['avatar']
+            record['createTime'] = record['created_at'].strftime("%H:%M:%S")
+        return resJson(200, "未读信息列表获取成功", unreadInfoList)
 
 # 更新会话中成员的未读状态
 @chat_bp.route(api_chat.update_conv_member_unread, methods=['POST'])
@@ -118,7 +113,7 @@ def update_conv_member_unread_info():
     data = request.json
     user_id = data['userId']
     conv_id = data['convId']
-    last_read_msg_id = data['lastReadMsgId']
+    last_read_msg_id = data['lastReadMsgId'],
     db = get_db()
     with db.cursor() as cur:
         # 更新会话中成员的未读状态
@@ -130,15 +125,31 @@ def update_conv_member_unread_info():
 @chat_bp.route('/conversation/list', methods=['GET'])
 def get_conv_list():
     user_id = request.args.get('userId')
-    conv_id = request.args.get('convId')
     db = get_db()
     with db.cursor() as cur:
-        # 查询用户加入的会话
-        cur.execute(
-            "SELECT * FROM conversations"
-        )
-        convList = cur.fetchall()
-        return resJson(200, "会话列表获取成功", convList)
+        user_info = getUserInfoById(cur, user_id)
+        groupList = getAllGroups(cur)
+        arr = []
+        obj = {}
+        for item in groupList:
+            msg_info = getLastMessage(cur, item['id'])
+            member_info = getConvMemberUnreadInfo(cur, item['id'], user_id)
+            obj = {
+                'convId': item['id'],
+                'convType': item['type'],
+                'name': item['name'],
+                'avatar': item['avatar'],
+                'id': msg_info['id'],
+                'content': msg_info['content'],
+                'msgType': msg_info['type'],
+                'createTime': msg_info['created_at'].strftime("%H:%M"),
+                'senderId': msg_info['sender_id'],
+                'senderNickname': user_info['nickname'],
+
+                'unreadCount': member_info['unread_count'],
+            }
+            arr.append(obj)
+    return resJson(200, "会话列表获取成功", arr)
 # 获取canvId 必传 session_key
 @chat_bp.route('/conversation/getIdBySessionKey', methods=['GET'])
 def get_conv_id_by_session_key():
