@@ -62,7 +62,10 @@ def getLastMessage(cur, conv_id):
 
 # 获取未读数量
 def getUnreadCount(cur, conversation_id, user_id):
-    last_read_msg_id = getConvMemberUnreadInfo(cur, conversation_id, user_id)['last_read_msg_id']
+    member_info = getConvMemberUnreadInfo(cur, conversation_id, user_id)
+    if not member_info:
+        return 0
+    last_read_msg_id = member_info['last_read_msg_id']
     cur.execute(
         "SELECT * FROM messages WHERE conversation_id=%s AND id>%s",
         (conversation_id, last_read_msg_id)
