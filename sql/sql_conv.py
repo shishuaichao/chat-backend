@@ -46,7 +46,7 @@ def getConvInfo(cur, conv_id):
 # 获取用户当前所有会话
 def getAllChats(cur, user_id):
     cur.execute(
-        "SELECT * FROM conversations WHERE type = 2 OR friend1 = %s OR friend2 = %s",
+        "SELECT * FROM conversations WHERE type = 2 OR friend1 = %s OR friend2 = %s ORDER BY updated_at ASC",
         (user_id, user_id)
     )
     conv_Info = cur.fetchall()

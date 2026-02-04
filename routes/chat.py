@@ -79,7 +79,7 @@ def get_messages_xxxrecords():
                 'name': user_info['nickname'],
                 'avatar': user_info['avatar'],
                 'msgType': record['type'],
-                'createTime': record['created_at'].strftime("%H:%M:%S"),
+                'createTime': record['created_at'].strftime("%H:%M"),
             }
             arr.append(obj)
     return resJson(200, "聊天记录获取成功", {
@@ -129,24 +129,29 @@ def get_conv_list():
     user_id = request.args.get('userId')
     db = get_db()
     with db.cursor() as cur:
-        user_info = getUserInfoById(cur, user_id)
         groupList = getAllChats(cur, user_id)
         arr = []
         obj = {}
         for item in groupList:
             msg_info = getLastMessage(cur, item['id'])
-            if not msg_info:
-                msg_info = {}
-                continue
+            print('msg_info', msg_info)
+            if msg_info:
+                sender_info = getUserInfoById(cur, msg_info['sender_id'])
+            else: 
+                sender_info = {}
+            
+            print('sender_info', sender_info)
             unread_count = getUnreadCount(cur, item['id'], user_id)
             if item['type'] == 1:
                 friend_info = getFriendInfo(cur, user_id, item['friend1'] if item['friend1'] != int(user_id) else item['friend2'])
-                print('friend_info', friend_info)
-                name = friend_info.get('remark', '')
+                e = friend_info['remark'] if friend_info['remark'] else friend_info['nickname']
+                name = e
                 avatar = friend_info['avatar']
+                senderNickname = e
             else:
                 name = item['name']
                 avatar = item['avatar']
+                senderNickname = sender_info['nickname'] if sender_info else ''
             obj = {
                 'convId': item['id'],
                 'convType': item['type'],
@@ -157,11 +162,12 @@ def get_conv_list():
                 'msgType': msg_info['type'],
                 'createTime': msg_info['created_at'].strftime("%H:%M"),
                 'senderId': msg_info['sender_id'],
-                'senderNickname': user_info['nickname'],
+                'senderNickname': senderNickname,
 
                 'unreadCount': unread_count,
             }
             arr.append(obj)
+            arr.sort(key=lambda x: x['createTime'], reverse=True)
     return resJson(200, "会话列表获取成功", arr)
 # 获取canvId 必传 session_key
 @chat_bp.route('/conversation/getIdBySessionKey', methods=['GET'])
