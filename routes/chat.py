@@ -165,7 +165,7 @@ def get_conv_list():
                 'id': msg_info.get('id', 0),
                 'content': msg_info.get('content', ''),
                 'msgType': msg_info.get('type', ''),
-                'createTime': msg_info.get('created_at', datetime.now()).strftime("%H:%M"),
+                'createTime': msg_info.get('created_at', datetime.now()).strftime("%H:%M:%S"),
                 'senderId': msg_info.get('sender_id', 0),
                 'senderNickname': senderNickname,
 

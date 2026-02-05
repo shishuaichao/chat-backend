@@ -95,7 +95,7 @@ def makeMessage(from_info, msg_info, conv_info):
 
         'content': msg_info['content'],
         'msgType': msg_info['type'],
-        'createTime': msg_info['created_at'].strftime("%H:%M"),
+        'createTime': msg_info['created_at'].strftime("%H:%M:%S"),
         
         # 'name': name,
 
